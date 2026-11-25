@@ -24,6 +24,8 @@ import DashboardPosts from "./components/shared/DashboardPosts "
 import DashboardUsers from "./components/shared/DashboardUsers"
 import DashboardComments from "./components/shared/DashboardComments"
 import AdminSettingsPage from "./pages/AdminSettingsPage"
+import ForgotPassword from "./pages/ForgotPassword"
+import DashboardCategories from "./components/shared/DashboardCategories"
 
 const App = () => {
   return (
@@ -43,6 +45,7 @@ const App = () => {
         {/* Auth Routes */}
         <Route path="/sign-in" element={<SignInForm />} />
         <Route path="/sign-up" element={<SignUpForm />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
         <Route path="/admin/login" element={<AdminLogin />} />
 
         {/* Protected User Routes */}
@@ -69,6 +72,14 @@ const App = () => {
             element={
               <AdminLayout title="Manage Articles">
                 <DashboardPosts />
+              </AdminLayout>
+            }
+          />
+          <Route
+            path="/admin/categories"
+            element={
+              <AdminLayout title="Manage Categories">
+                <DashboardCategories />
               </AdminLayout>
             }
           />

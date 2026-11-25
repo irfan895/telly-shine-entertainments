@@ -24,7 +24,7 @@ import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { useToast } from "@/hooks/use-toast"
 
-const CATEGORIES = ["all", "blog", "television", "digital", "movies", "stories", "podcasts"]
+const CATEGORIES = ["all", "bollywood", "hollywood", "television", "digital", "movies", "stories", "blog", "podcasts"]
 
 const DashboardPosts = () => {
   const { currentUser } = useSelector((state) => state.user)

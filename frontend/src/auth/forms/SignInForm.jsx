@@ -117,6 +117,15 @@ const SignInForm = () => {
               )}
             />
 
+            <div className="flex justify-end">
+              <Link
+                to="/forgot-password"
+                className="text-xs font-medium text-red-600 hover:underline"
+              >
+                Forgot password?
+              </Link>
+            </div>
+
             {errorMessage && (
               <p className="text-sm text-red-600">{errorMessage}</p>
             )}

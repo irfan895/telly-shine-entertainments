@@ -23,7 +23,7 @@ import "react-quill/dist/quill.snow.css"
 import { useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
 
-const CATEGORIES = ["Blog", "Television", "Digital", "Movies", "Stories", "Podcasts"]
+const CATEGORIES = ["Bollywood", "Hollywood", "Television", "Digital", "Movies", "Stories", "Blog", "Podcasts"]
 
 const EditPost = () => {
   const { toast } = useToast()

@@ -4,12 +4,20 @@ import PostCard from "@/components/shared/PostCard"
 import { Button } from "@/components/ui/button"
 
 const CATEGORY_LABELS = {
+  bollywood: {
+    title: "Bollywood",
+    subtitle: "Bollywood film news, box office updates, trailers, and celebrity scoops.",
+  },
+  hollywood: {
+    title: "Hollywood",
+    subtitle: "Hollywood premieres, global cinema, awards, and international star news.",
+  },
   blog: {
     title: "Blog",
     subtitle: "Editorial opinions, deep dives, and commentary from Telly Shine Entertainment.",
   },
   television: {
-    title: "Television",
+    title: "TV & Television",
     subtitle: "Daily soap updates, TRP charts, casting news, and exclusive TV interviews.",
   },
   digital: {

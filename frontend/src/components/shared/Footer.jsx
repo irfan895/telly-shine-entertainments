@@ -44,13 +44,13 @@ const Footer = () => {
             Categories
           </h2>
           <ul className="grid grid-cols-2 gap-2 text-slate-400 text-sm">
-            <li><Link to="/category/blog" className="hover:text-white">Blog</Link></li>
-            <li><Link to="/category/television" className="hover:text-white">Television</Link></li>
+            <li><Link to="/category/bollywood" className="hover:text-white">Bollywood</Link></li>
+            <li><Link to="/category/hollywood" className="hover:text-white">Hollywood</Link></li>
+            <li><Link to="/category/television" className="hover:text-white">TV &amp; Television</Link></li>
             <li><Link to="/category/digital" className="hover:text-white">Digital</Link></li>
             <li><Link to="/category/movies" className="hover:text-white">Movies</Link></li>
             <li><Link to="/category/stories" className="hover:text-white">Stories</Link></li>
-            <li><Link to="/category/podcasts" className="hover:text-white">Podcasts</Link></li>
-            <li><Link to="/about" className="hover:text-white">About</Link></li>
+            <li><Link to="/news" className="hover:text-white">Latest News</Link></li>
             <li><Link to="/contact" className="hover:text-white">Contact</Link></li>
           </ul>
         </div>

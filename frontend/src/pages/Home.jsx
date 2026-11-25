@@ -24,12 +24,13 @@ const SOCIAL_LINKS = [
 ]
 
 const CATEGORY_SECTIONS = [
-  { name: "Blog", slug: "blog" },
-  { name: "Television", slug: "television" },
+  { name: "Bollywood", slug: "bollywood" },
+  { name: "Hollywood", slug: "hollywood" },
+  { name: "TV & Television", slug: "television" },
   { name: "Digital", slug: "digital" },
   { name: "Movies", slug: "movies" },
   { name: "Stories", slug: "stories" },
-  { name: "Podcasts", slug: "podcasts" },
+  { name: "Blog", slug: "blog" },
 ]
 
 const Home = () => {

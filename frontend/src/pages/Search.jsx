@@ -189,12 +189,13 @@ const Search = () => {
                 <SelectGroup>
                   <SelectLabel>Category:</SelectLabel>
 
-                  <SelectItem value="blog">Blog</SelectItem>
-                  <SelectItem value="television">Television</SelectItem>
+                  <SelectItem value="bollywood">Bollywood</SelectItem>
+                  <SelectItem value="hollywood">Hollywood</SelectItem>
+                  <SelectItem value="television">TV &amp; Television</SelectItem>
                   <SelectItem value="digital">Digital</SelectItem>
                   <SelectItem value="movies">Movies</SelectItem>
                   <SelectItem value="stories">Stories</SelectItem>
-                  <SelectItem value="podcasts">Podcasts</SelectItem>
+                  <SelectItem value="blog">Blog</SelectItem>
                 </SelectGroup>
               </SelectContent>
             </Select>

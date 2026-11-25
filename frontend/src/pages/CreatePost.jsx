@@ -25,11 +25,13 @@ import { useNavigate } from "react-router-dom"
 import { Eye, ImagePlus, Trash2, UploadCloud } from "lucide-react"
 
 const CATEGORIES = [
-  { label: "Blog", value: "Blog" },
-  { label: "Television", value: "Television" },
+  { label: "Bollywood", value: "Bollywood" },
+  { label: "Hollywood", value: "Hollywood" },
+  { label: "TV & Television", value: "Television" },
   { label: "Digital", value: "Digital" },
   { label: "Movies", value: "Movies" },
   { label: "Stories", value: "Stories" },
+  { label: "Blog", value: "Blog" },
   { label: "Podcasts", value: "Podcasts" },
 ]
 

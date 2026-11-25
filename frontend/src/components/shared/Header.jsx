@@ -16,12 +16,14 @@ import { signOut } from "firebase/auth"
 import { auth } from "@/firebase"
 
 const NAV_ITEMS = [
-  { label: "Blog", to: "/category/blog" },
-  { label: "Television", to: "/category/television" },
+  { label: "Home", to: "/" },
+  { label: "Latest News", to: "/news" },
+  { label: "Bollywood", to: "/category/bollywood" },
+  { label: "Hollywood", to: "/category/hollywood" },
+  { label: "TV & Television", to: "/category/television" },
   { label: "Digital", to: "/category/digital" },
   { label: "Movies", to: "/category/movies" },
   { label: "Stories", to: "/category/stories" },
-  { label: "Podcasts", to: "/category/podcasts" },
   { label: "Contact", to: "/contact" },
 ]
 
@@ -197,7 +199,7 @@ const Header = () => {
       {/* Horizontal Editorial Navigation Bar (Light Grey Background, Black Text) */}
       <nav className="hidden md:block bg-gray-100 border-y border-gray-200">
         <div className="max-w-7xl mx-auto px-6">
-          <ul className="flex items-center justify-between lg:justify-center lg:gap-12 py-3">
+          <ul className="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 py-3">
             {NAV_ITEMS.map((item) => (
               <li key={item.to}>
                 <NavLink

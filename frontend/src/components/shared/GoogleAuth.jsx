@@ -17,7 +17,7 @@ const GoogleAuth = () => {
     if (!auth) {
       toast({
         title: "Google Sign-In Unavailable",
-        description: "Firebase configuration is missing in frontend/.env.",
+        description: "Please sign in using your email and password.",
       })
       return
     }
@@ -58,11 +58,10 @@ const GoogleAuth = () => {
         error.code?.includes("api-key-not-valid") ||
         error.code === "auth/invalid-api-key"
       ) {
-        const msg =
-          "Firebase API key in frontend/.env is invalid or expired. Copy the valid Web API Key from Firebase Console (Project: shine-ae3df) into frontend/.env and restart the dev server."
+        const msg = "Google Sign-In is temporarily unavailable. Please sign in with email and password."
         dispatch(signInFailure(msg))
         toast({
-          title: "Firebase Configuration Needed",
+          title: "Google Sign-In Unavailable",
           description: msg,
         })
       } else {

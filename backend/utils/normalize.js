@@ -1,6 +1,9 @@
 export const CATEGORY_MAP = {
   blog: { name: "Blog", slug: "blog" },
+  bollywood: { name: "Bollywood", slug: "bollywood" },
+  hollywood: { name: "Hollywood", slug: "hollywood" },
   television: { name: "Television", slug: "television" },
+  "tv-television": { name: "Television", slug: "television" },
   digital: { name: "Digital", slug: "digital" },
   "digital-ott": { name: "Digital", slug: "digital" },
   movies: { name: "Movies", slug: "movies" },
