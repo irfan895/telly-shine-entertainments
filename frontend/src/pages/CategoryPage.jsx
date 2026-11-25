@@ -36,6 +36,7 @@ const CATEGORY_LABELS = {
     title: "Podcasts",
     subtitle: "Conversations, audio episodes, and unfiltered chats with your favorite stars.",
   },
+
 }
 
 const CategoryPage = () => {
@@ -50,6 +51,7 @@ const CategoryPage = () => {
   }
 
   useEffect(() => {
+    document.title = `${info.title} | Telly Shine Entertainment`
     const fetchCategoryPosts = async () => {
       try {
         setLoading(true)

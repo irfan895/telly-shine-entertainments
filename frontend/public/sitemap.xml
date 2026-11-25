@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://telly-shine-entertainments.vercel.app/</loc><priority>1.0</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/news</loc><priority>0.9</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/category/bollywood</loc><priority>0.8</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/category/hollywood</loc><priority>0.8</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/category/television</loc><priority>0.8</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/category/digital</loc><priority>0.8</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/category/movies</loc><priority>0.8</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/category/stories</loc><priority>0.8</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/about</loc><priority>0.6</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/contact</loc><priority>0.6</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/privacy-policy</loc><priority>0.4</priority></url>
+  <url><loc>https://telly-shine-entertainments.vercel.app/terms</loc><priority>0.4</priority></url>
+</urlset>

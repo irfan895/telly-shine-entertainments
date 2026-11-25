@@ -178,11 +178,18 @@ const Header = () => {
               </DropdownMenuContent>
             </DropdownMenu>
           ) : (
-            <Link to="/sign-in">
-              <Button className="bg-red-600 hover:bg-red-700 text-white text-sm px-4 h-9">
-                Sign In
-              </Button>
-            </Link>
+            <div className="flex items-center gap-2">
+              <Link to="/sign-in">
+                <Button variant="outline" className="border-slate-300 text-slate-900 hover:bg-slate-100 text-sm px-3 h-9">
+                  Sign In
+                </Button>
+              </Link>
+              <Link to="/sign-up" className="hidden sm:inline-block">
+                <Button className="bg-red-600 hover:bg-red-700 text-white text-sm px-3 h-9">
+                  Sign Up
+                </Button>
+              </Link>
+            </div>
           )}
 
           <button

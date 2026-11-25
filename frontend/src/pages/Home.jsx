@@ -38,6 +38,7 @@ const Home = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    document.title = "Telly Shine Entertainment — Bollywood, TV, Digital & Movie News"
     const fetchPosts = async () => {
       try {
         setLoading(true)
@@ -71,6 +72,28 @@ const Home = () => {
 
   return (
     <main className="bg-white min-h-screen">
+      {/* Breaking News Ticker */}
+      {posts.length > 0 && (
+        <div className="bg-red-600 text-white text-xs sm:text-sm py-2 px-4">
+          <div className="max-w-7xl mx-auto flex items-center gap-3 overflow-hidden">
+            <span className="shrink-0 rounded bg-slate-950 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider">
+              Breaking News
+            </span>
+            <div className="flex items-center gap-6 overflow-x-auto no-scrollbar whitespace-nowrap">
+              {posts.slice(0, 5).map((item) => (
+                <Link
+                  key={item._id}
+                  to={`/post/${item.slug}`}
+                  className="hover:underline font-medium shrink-0"
+                >
+                  • {item.title}
+                </Link>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Hero Section */}
       <section className="border-b border-gray-200 bg-slate-950 text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-16">

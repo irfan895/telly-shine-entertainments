@@ -100,6 +100,27 @@ const DashboardPosts = () => {
     }
   }
 
+  const handleToggleFlag = async (post, field) => {
+    try {
+      const res = await fetch(
+        `/api/post/updatepost/${post._id}/${currentUser._id}`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ [field]: !post[field] }),
+        }
+      )
+      const data = await res.json()
+      if (res.ok) {
+        setPosts((prev) => prev.map((p) => (p._id === post._id ? data : p)))
+        toast({ title: "Article updated" })
+      }
+    } catch (error) {
+      toast({ title: "Error", description: error.message })
+    }
+  }
+
   const handleDeletePost = async () => {
     try {
       const res = await fetch(
@@ -219,6 +240,20 @@ const DashboardPosts = () => {
                         className="text-blue-600 hover:underline"
                       >
                         {post.status === "draft" ? "Publish" : "Unpublish"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFlag(post, "is_featured")}
+                        className={post.is_featured ? "text-amber-600 hover:underline" : "text-slate-400 hover:underline"}
+                      >
+                        {post.is_featured ? "Featured" : "Feature"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFlag(post, "is_trending")}
+                        className={post.is_trending ? "text-purple-600 hover:underline" : "text-slate-400 hover:underline"}
+                      >
+                        {post.is_trending ? "Trending" : "Trend"}
                       </button>
                       <Link
                         to={`/update-post/${post._id}`}

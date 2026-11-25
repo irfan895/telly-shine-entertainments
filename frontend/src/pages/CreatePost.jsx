@@ -49,6 +49,7 @@ const CreatePost = () => {
     title: "",
     category: "Blog",
     description: "",
+    tags: "",
     image: "",
     content: "",
     is_featured: false,
@@ -240,6 +241,22 @@ const CreatePost = () => {
               value={formData.description}
               onChange={(e) =>
                 setFormData((prev) => ({ ...prev, description: e.target.value }))
+              }
+              className="border-gray-300"
+            />
+          </div>
+
+          {/* Tags */}
+          <div>
+            <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1.5">
+              Tags (Comma-separated, optional)
+            </label>
+            <Input
+              type="text"
+              placeholder="e.g. Bollywood, Box Office, Exclusive"
+              value={formData.tags}
+              onChange={(e) =>
+                setFormData((prev) => ({ ...prev, tags: e.target.value }))
               }
               className="border-gray-300"
             />

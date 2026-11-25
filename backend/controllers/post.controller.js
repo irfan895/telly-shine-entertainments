@@ -53,7 +53,7 @@ export const create = async (req, res, next) => {
     return next(errorHandler(403, "You are not authorized to create a post!"))
   }
 
-  const { title, content, category, image, description, status, is_featured, is_trending } = req.body
+  const { title, content, category, image, description, status, is_featured, is_trending, tags } = req.body
 
   if (!title || !title.trim() || !content || !content.trim()) {
     return next(errorHandler(400, "Article title and content are required!"))
@@ -85,6 +85,11 @@ export const create = async (req, res, next) => {
       status: articleStatus,
       is_featured: Boolean(is_featured),
       is_trending: Boolean(is_trending),
+      tags: Array.isArray(tags)
+        ? tags.map((t) => String(t).trim()).filter(Boolean)
+        : typeof tags === "string"
+        ? tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : [],
       published_at: articleStatus === "published" ? nowIso : null,
       author: authorUser
         ? { name: authorUser.full_name || authorUser.username, user_id: authorUser._id, avatar: authorUser.profilePicture }
@@ -242,6 +247,13 @@ export const updatepost = async (req, res, next) => {
     }
     if (req.body.is_featured !== undefined) updates.is_featured = Boolean(req.body.is_featured)
     if (req.body.is_trending !== undefined) updates.is_trending = Boolean(req.body.is_trending)
+    if (req.body.tags !== undefined) {
+      updates.tags = Array.isArray(req.body.tags)
+        ? req.body.tags.map((t) => String(t).trim()).filter(Boolean)
+        : typeof req.body.tags === "string"
+        ? req.body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+        : []
+    }
     updates.updated_at = new Date().toISOString()
 
     const updatedPost = await Post.findByIdAndUpdate(

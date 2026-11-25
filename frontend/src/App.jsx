@@ -26,6 +26,9 @@ import DashboardComments from "./components/shared/DashboardComments"
 import AdminSettingsPage from "./pages/AdminSettingsPage"
 import ForgotPassword from "./pages/ForgotPassword"
 import DashboardCategories from "./components/shared/DashboardCategories"
+import PrivacyPolicy from "./pages/PrivacyPolicy"
+import Terms from "./pages/Terms"
+import NotFound from "./pages/NotFound"
 
 const App = () => {
   return (
@@ -37,6 +40,8 @@ const App = () => {
         <Route path="/" element={<Home />} />
         <Route path="/about" element={<About />} />
         <Route path="/contact" element={<Contact />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<Terms />} />
         <Route path="/category/:slug" element={<CategoryPage />} />
         <Route path="/search" element={<Search />} />
         <Route path="/news" element={<Search />} />
@@ -101,6 +106,8 @@ const App = () => {
           />
           <Route path="/admin/settings" element={<AdminSettingsPage />} />
         </Route>
+
+        <Route path="*" element={<NotFound />} />
       </Routes>
 
       <Footer />
