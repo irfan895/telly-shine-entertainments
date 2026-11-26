@@ -12,7 +12,6 @@ import {
 } from "../ui/table"
 import {
   Users,
-  FileText,
   CheckCircle2,
   FileEdit,
   MessageSquare,
@@ -24,7 +23,7 @@ import {
 
 const MainDashboard = () => {
   const [users, setUsers] = useState([])
-  const [comments, setComments] = useState([])
+  const [, setComments] = useState([])
   const [posts, setPosts] = useState([])
   const [activityLogs, setActivityLogs] = useState([])
 

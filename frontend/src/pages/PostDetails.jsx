@@ -54,7 +54,7 @@ const PostDetails = () => {
             )
           }
         }
-      } catch (err) {
+      } catch {
         setError(true)
         setLoading(false)
       }

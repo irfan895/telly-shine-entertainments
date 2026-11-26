@@ -85,7 +85,6 @@ const CommentSection = ({ postId, articleId }) => {
 
       if (res.ok) {
         const data = await res.json()
-
         setAllComments(
           allComments.map((comment) =>
             comment._id === commentId
@@ -126,8 +125,7 @@ const CommentSection = ({ postId, articleId }) => {
       })
 
       if (res.ok) {
-        const data = await res.json()
-
+        await res.json()
         setAllComments(
           allComments.filter((comment) => comment._id !== commentId)
         )

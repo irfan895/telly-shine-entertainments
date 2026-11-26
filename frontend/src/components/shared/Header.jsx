@@ -54,7 +54,9 @@ const Header = () => {
       if (auth) {
         try {
           await signOut(auth)
-        } catch { }
+        } catch (signOutErr) {
+          console.warn("Firebase signout:", signOutErr.message)
+        }
       }
       dispatch(signOutSuccess())
       navigate("/")

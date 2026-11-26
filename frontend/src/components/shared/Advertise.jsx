@@ -7,7 +7,7 @@ const Advertise = () => {
     <div className="flex flex-col md:flex-row p-3 border border-teal-600 justify-center items-center rounded-tl-3xl rounded-br-3xl text-center">
       <div className="flex-1 justify-center flex flex-col p-3 w-full md:w-3/5">
         <h2 className="text-2xl font-semibold text-wrap">
-          Want to know more about today's{" "}
+          Want to know more about today&apos;s{" "}
           <span className="text-red-600">TOP 10</span> news?
         </h2>
 

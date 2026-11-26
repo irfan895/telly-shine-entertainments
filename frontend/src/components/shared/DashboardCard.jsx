@@ -17,20 +17,6 @@ import {
 
 import { ChartContainer } from "../ui/chart"
 
-const chartData = [
-  { browser: "safari", visitors: 200, fill: "var(--color-safari)" },
-]
-
-const chartConfig = {
-  visitors: {
-    label: "Visitors",
-  },
-  safari: {
-    label: "Safari",
-    color: "hsl(var(--chart-2))",
-  },
-}
-
 const DashboardCard = ({
   title,
   description,
