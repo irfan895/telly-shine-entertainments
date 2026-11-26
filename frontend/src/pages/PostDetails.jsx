@@ -1,4 +1,3 @@
-import Advertise from "@/components/shared/Advertise"
 import CommentSection from "@/components/shared/CommentSection"
 import PostCard from "@/components/shared/PostCard"
 import { Button } from "@/components/ui/button"
@@ -227,10 +226,6 @@ const PostDetails = () => {
               ))}
             </div>
           )}
-
-          <div className="my-8">
-            <Advertise />
-          </div>
 
           <CommentSection postId={post._id} articleId={post.article_id} />
         </article>

@@ -1,4 +1,3 @@
-import Advertise from "@/components/shared/Advertise"
 import PostCard from "@/components/shared/PostCard"
 import { Button } from "@/components/ui/button"
 import { getFallbackImage, handleImageError } from "@/lib/imageFallback"
@@ -232,10 +231,6 @@ const Home = () => {
           </div>
         </section>
       )}
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4">
-        <Advertise />
-      </div>
 
       {/* Category Sections: Blog, Television, Digital, Movies, Stories, Podcasts */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 divide-y divide-gray-100">
