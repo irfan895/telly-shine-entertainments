@@ -36,6 +36,28 @@ const DashboardPosts = () => {
   const [statusFilter, setStatusFilter] = useState("all")
   const [showMore, setShowMore] = useState(false)
   const [postIdToDelete, setPostIdToDelete] = useState("")
+  const [syncing, setSyncing] = useState(false)
+
+  const handleSyncNews = async () => {
+    try {
+      setSyncing(true)
+      const res = await fetch("/api/post/sync-news", {
+        method: "POST",
+        credentials: "include",
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast({ title: `Synced ${data.inserted || 0} new entertainment articles!` })
+        fetchPosts(0, false)
+      } else {
+        toast({ title: "Sync failed", description: data.message })
+      }
+    } catch (err) {
+      toast({ title: "Sync error", description: err.message })
+    } finally {
+      setSyncing(false)
+    }
+  }
 
   const fetchPosts = async (startIndex = 0, append = false) => {
     try {
@@ -183,6 +205,16 @@ const DashboardPosts = () => {
             <option value="published">Published</option>
             <option value="draft">Draft</option>
           </select>
+
+          <Button
+            type="button"
+            variant="outline"
+            disabled={syncing}
+            onClick={handleSyncNews}
+            className="border-red-600 text-red-600 hover:bg-red-50"
+          >
+            {syncing ? "Syncing..." : "Sync Latest News"}
+          </Button>
         </div>
       </div>
 
@@ -254,6 +286,13 @@ const DashboardPosts = () => {
                         className={post.is_trending ? "text-purple-600 hover:underline" : "text-slate-400 hover:underline"}
                       >
                         {post.is_trending ? "Trending" : "Trend"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleFlag(post, "is_breaking")}
+                        className={post.is_breaking ? "text-red-600 hover:underline" : "text-slate-400 hover:underline"}
+                      >
+                        {post.is_breaking ? "Breaking" : "Break"}
                       </button>
                       <Link
                         to={`/update-post/${post._id}`}

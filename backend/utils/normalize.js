@@ -72,6 +72,7 @@ export const normalizePost = (doc) => {
     status: obj.status || "published",
     is_featured: Boolean(obj.is_featured),
     is_trending: Boolean(obj.is_trending),
+    is_breaking: Boolean(obj.is_breaking),
     author: obj.author || { name: "Telly Shine Editorial" },
     tags: Array.isArray(obj.tags) ? obj.tags : [],
     views_count: obj.views_count || 0,

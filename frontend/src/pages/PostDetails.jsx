@@ -4,6 +4,7 @@ import PostCard from "@/components/shared/PostCard"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/hooks/use-toast"
+import { getFallbackImage, handleImageError } from "@/lib/imageFallback"
 import React, { useEffect, useState } from "react"
 import { Link, useParams } from "react-router-dom"
 import { FaFacebook, FaLink, FaWhatsapp } from "react-icons/fa"
@@ -197,8 +198,9 @@ const PostDetails = () => {
           </div>
 
           <img
-            src={post.image || post.featured_image}
+            src={post.image || post.featured_image || getFallbackImage(post.category_slug)}
             alt={post.title}
+            onError={(e) => handleImageError(e, post.category_slug)}
             className="mt-6 rounded-2xl max-h-[500px] w-full object-cover shadow-md"
           />
 

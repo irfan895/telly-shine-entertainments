@@ -5,6 +5,7 @@ import Post from "../models/post.model.js"
 import User from "../models/user.model.js"
 import { errorHandler } from "../utils/error.js"
 import { normalizeCategory, normalizePost, normalizeUser } from "../utils/normalize.js"
+import { syncEntertainmentNews } from "../utils/newsAggregator.js"
 
 const SANITIZE_OPTIONS = {
   allowedTags: [
@@ -53,7 +54,7 @@ export const create = async (req, res, next) => {
     return next(errorHandler(403, "You are not authorized to create a post!"))
   }
 
-  const { title, content, category, image, description, status, is_featured, is_trending, tags } = req.body
+  const { title, content, category, image, description, status, is_featured, is_trending, is_breaking, tags } = req.body
 
   if (!title || !title.trim() || !content || !content.trim()) {
     return next(errorHandler(400, "Article title and content are required!"))
@@ -85,6 +86,7 @@ export const create = async (req, res, next) => {
       status: articleStatus,
       is_featured: Boolean(is_featured),
       is_trending: Boolean(is_trending),
+      is_breaking: Boolean(is_breaking),
       tags: Array.isArray(tags)
         ? tags.map((t) => String(t).trim()).filter(Boolean)
         : typeof tags === "string"
@@ -105,6 +107,13 @@ export const create = async (req, res, next) => {
 
 export const getPosts = async (req, res, next) => {
   try {
+    const existingCount = await Post.countDocuments({ status: { $ne: "draft" } })
+    if (existingCount === 0) {
+      await syncEntertainmentNews({ force: true })
+    } else {
+      syncEntertainmentNews().catch(() => {})
+    }
+
     const startIndex = parseInt(req.query.startIndex, 10) || 0
     const limit = parseInt(req.query.limit, 10) || 12
     const sortDirection = req.query.sort === "asc" ? 1 : -1
@@ -146,6 +155,7 @@ export const getPosts = async (req, res, next) => {
     if (req.query.postId) filter._id = req.query.postId
     if (req.query.featured === "true") filter.is_featured = true
     if (req.query.trending === "true") filter.is_trending = true
+    if (req.query.breaking === "true") filter.is_breaking = true
 
     if (req.query.searchTerm) {
       const term = req.query.searchTerm.trim()
@@ -247,6 +257,7 @@ export const updatepost = async (req, res, next) => {
     }
     if (req.body.is_featured !== undefined) updates.is_featured = Boolean(req.body.is_featured)
     if (req.body.is_trending !== undefined) updates.is_trending = Boolean(req.body.is_trending)
+    if (req.body.is_breaking !== undefined) updates.is_breaking = Boolean(req.body.is_breaking)
     if (req.body.tags !== undefined) {
       updates.tags = Array.isArray(req.body.tags)
         ? req.body.tags.map((t) => String(t).trim()).filter(Boolean)
@@ -263,6 +274,18 @@ export const updatepost = async (req, res, next) => {
     )
 
     res.status(200).json(normalizePost(updatedPost))
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const syncNews = async (req, res, next) => {
+  if (!req.user?.isAdmin) {
+    return next(errorHandler(403, "Administrator privileges required"))
+  }
+  try {
+    const result = await syncEntertainmentNews({ force: true })
+    res.status(200).json({ success: true, ...result })
   } catch (error) {
     next(error)
   }

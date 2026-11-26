@@ -1,7 +1,8 @@
 import Advertise from "@/components/shared/Advertise"
 import PostCard from "@/components/shared/PostCard"
 import { Button } from "@/components/ui/button"
-import { ArrowRight, Youtube, Instagram, Facebook, Flame, Sparkles } from "lucide-react"
+import { getFallbackImage, handleImageError } from "@/lib/imageFallback"
+import { ArrowRight, Youtube, Instagram, Facebook, Flame, Sparkles, PlayCircle } from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
@@ -58,6 +59,8 @@ const Home = () => {
 
   const featuredPosts = posts.filter((p) => p.is_featured).slice(0, 3)
   const heroPost = featuredPosts[0] || posts[0] || null
+  const breakingPosts = posts.filter((p) => p.is_breaking)
+  const tickerPosts = (breakingPosts.length > 0 ? breakingPosts : posts).slice(0, 6)
   const trendingPosts = posts.filter((p) => p.is_trending).slice(0, 3)
   const latestPosts = posts.slice(0, 6)
 
@@ -80,7 +83,7 @@ const Home = () => {
               Breaking News
             </span>
             <div className="flex items-center gap-6 overflow-x-auto no-scrollbar whitespace-nowrap">
-              {posts.slice(0, 5).map((item) => (
+              {tickerPosts.map((item) => (
                 <Link
                   key={item._id}
                   to={`/post/${item.slug}`}
@@ -132,8 +135,9 @@ const Home = () => {
                 className="block rounded-2xl overflow-hidden shadow-2xl h-64 md:h-96 bg-slate-900"
               >
                 <img
-                  src={heroPost.image || heroPost.featured_image}
+                  src={heroPost.image || heroPost.featured_image || getFallbackImage(heroPost.category_slug)}
                   alt={heroPost.title}
+                  onError={(e) => handleImageError(e, heroPost.category_slug)}
                   className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
                 />
               </Link>
@@ -265,6 +269,31 @@ const Home = () => {
           )
         })}
       </div>
+
+      {/* Entertainment Videos Section */}
+      <section className="bg-slate-950 text-white py-14 mt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="max-w-2xl">
+            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-red-400">
+              <PlayCircle className="w-4 h-4" /> Telly Shine Originals
+            </span>
+            <h2 className="text-2xl md:text-3xl font-black mt-2">
+              Entertainment Videos &amp; Celebrity Interviews
+            </h2>
+            <p className="mt-2 text-slate-300 text-sm sm:text-base">
+              Watch exclusive actor interviews, serial promos, red carpet highlights, and Bollywood updates on our official YouTube channel.
+            </p>
+          </div>
+          <a
+            href="https://youtube.com/@tellyshineofficial456?si=Navejp9tReHUExfa"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 px-6 py-3 font-bold text-white shrink-0 transition-colors"
+          >
+            <Youtube className="w-5 h-5" /> Watch on YouTube
+          </a>
+        </div>
+      </section>
 
       {/* Follow Us Section */}
       <section className="bg-gray-100 border-t border-gray-200 py-14 mt-6">

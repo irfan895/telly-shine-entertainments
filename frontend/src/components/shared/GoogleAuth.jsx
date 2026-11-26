@@ -1,6 +1,11 @@
-import React, { useState } from "react"
+import React, { useEffect, useState } from "react"
 import { Button } from "../ui/button"
-import { GoogleAuthProvider, signInWithPopup } from "firebase/auth"
+import {
+  GoogleAuthProvider,
+  getRedirectResult,
+  signInWithPopup,
+  signInWithRedirect,
+} from "firebase/auth"
 import { auth } from "@/firebase"
 import { useDispatch } from "react-redux"
 import { signInFailure, signInStart, signInSuccess } from "@/redux/user/userSlice"
@@ -13,6 +18,40 @@ const GoogleAuth = () => {
   const { toast } = useToast()
   const [googleLoading, setGoogleLoading] = useState(false)
 
+  const exchangeFirebaseToken = async (firebaseUser) => {
+    const idToken = await firebaseUser.getIdToken()
+    const res = await fetch("/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ idToken }),
+    })
+
+    const data = await res.json()
+    if (!res.ok) {
+      throw new Error(data.message || "Google sign-in failed")
+    }
+
+    dispatch(signInSuccess(data))
+    toast({ title: `Welcome, ${data.username}!` })
+    navigate(data.isAdmin ? "/admin/dashboard" : "/")
+  }
+
+  useEffect(() => {
+    if (!auth) return
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result?.user) {
+          setGoogleLoading(true)
+          return exchangeFirebaseToken(result.user)
+        }
+      })
+      .catch((error) => {
+        console.error("Google redirect sign-in error:", error)
+      })
+      .finally(() => setGoogleLoading(false))
+  }, [])
+
   const handleGoogleClick = async () => {
     if (!auth) {
       toast({
@@ -22,55 +61,38 @@ const GoogleAuth = () => {
       return
     }
 
+    const provider = new GoogleAuthProvider()
+    provider.setCustomParameters({ prompt: "select_account" })
+
     try {
       setGoogleLoading(true)
       dispatch(signInStart())
-
-      const provider = new GoogleAuthProvider()
-      provider.setCustomParameters({ prompt: "select_account" })
-
       const firebaseResponse = await signInWithPopup(auth, provider)
-      const idToken = await firebaseResponse.user.getIdToken()
-
-      const res = await fetch("/api/auth/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idToken }),
-      })
-
-      const data = await res.json()
-      if (!res.ok) {
-        throw new Error(data.message || "Google sign-in failed")
-      }
-
-      dispatch(signInSuccess(data))
-      toast({ title: `Welcome, ${data.username}!` })
-      navigate(data.isAdmin ? "/admin/dashboard" : "/")
+      await exchangeFirebaseToken(firebaseResponse.user)
     } catch (error) {
+      if (error.code === "auth/popup-blocked") {
+        toast({
+          title: "Popup Blocked",
+          description: "Redirecting to Google Sign-In...",
+        })
+        await signInWithRedirect(auth, provider)
+        return
+      }
       if (
         error.code === "auth/popup-closed-by-user" ||
         error.code === "auth/cancelled-popup-request"
       ) {
         dispatch(signInFailure(null))
         toast({ title: "Google sign-in was cancelled." })
-      } else if (
-        error.code?.includes("api-key-not-valid") ||
-        error.code === "auth/invalid-api-key"
-      ) {
-        const msg = "Google Sign-In is temporarily unavailable. Please sign in with email and password."
+      } else if (error.code === "auth/unauthorized-domain") {
+        const msg = `Domain "${window.location.hostname}" is not authorized in Firebase Console → Authentication → Settings → Authorized domains.`
         dispatch(signInFailure(msg))
-        toast({
-          title: "Google Sign-In Unavailable",
-          description: msg,
-        })
+        toast({ title: "Domain Not Authorized", description: msg })
       } else {
         console.error("Google authentication failed:", error)
-        dispatch(signInFailure(error.message))
-        toast({
-          title: "Google Sign-In Failed",
-          description: error.message || "Please try again.",
-        })
+        const msg = error.message || "Google sign-in failed. Please try again."
+        dispatch(signInFailure(msg))
+        toast({ title: "Google Sign-In Failed", description: msg })
       }
     } finally {
       setGoogleLoading(false)

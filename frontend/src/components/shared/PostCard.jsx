@@ -1,5 +1,6 @@
 import React from "react"
 import { Link } from "react-router-dom"
+import { getFallbackImage, handleImageError } from "@/lib/imageFallback"
 
 const PostCard = ({ post }) => {
   const dateValue = post.published_at || post.createdAt
@@ -19,8 +20,9 @@ const PostCard = ({ post }) => {
         className="block h-52 w-full overflow-hidden bg-gray-100"
       >
         <img
-          src={post.image || post.featured_image}
+          src={post.image || post.featured_image || getFallbackImage(post.category_slug)}
           alt={post.title}
+          onError={(e) => handleImageError(e, post.category_slug)}
           className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
           loading="lazy"
         />

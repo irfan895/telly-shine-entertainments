@@ -54,6 +54,7 @@ const CreatePost = () => {
     content: "",
     is_featured: false,
     is_trending: false,
+    is_breaking: false,
   })
 
   const [submitting, setSubmitting] = useState(false)
@@ -398,6 +399,18 @@ const CreatePost = () => {
                 checked={formData.is_trending}
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, is_trending: e.target.checked }))
+                }
+                className="h-4 w-4 accent-red-600"
+              />
+            </label>
+
+            <label className="flex items-center justify-between text-sm text-slate-700 cursor-pointer">
+              <span>Mark as Breaking News</span>
+              <input
+                type="checkbox"
+                checked={formData.is_breaking}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, is_breaking: e.target.checked }))
                 }
                 className="h-4 w-4 accent-red-600"
               />

@@ -12,6 +12,7 @@ import postRoutes from "./routes/post.route.js"
 import commentRoutes from "./routes/comment.route.js"
 import contactRoutes from "./routes/contact.route.js"
 import categoryRoutes from "./routes/category.route.js"
+import { syncEntertainmentNews } from "./utils/newsAggregator.js"
 
 dotenv.config()
 
@@ -91,6 +92,7 @@ mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB connected to telly_shine_db")
+    syncEntertainmentNews().catch((e) => console.warn("Initial news sync:", e.message))
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Telly Shine Entertainment API running on port ${PORT}`)
     })
