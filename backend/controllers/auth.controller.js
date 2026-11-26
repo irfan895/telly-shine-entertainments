@@ -114,7 +114,7 @@ export const signin = async (req, res, next) => {
     res
       .status(200)
       .cookie("access_token", token, getCookieOptions())
-      .json(userPayload)
+      .json({ ...userPayload, token })
   } catch (error) {
     next(error)
   }
@@ -164,7 +164,7 @@ export const adminSignin = async (req, res, next) => {
     res
       .status(200)
       .cookie("access_token", token, getCookieOptions())
-      .json(userPayload)
+      .json({ ...userPayload, token })
   } catch (error) {
     next(error)
   }
@@ -233,7 +233,7 @@ export const google = async (req, res, next) => {
     return res
       .status(200)
       .cookie("access_token", token, getCookieOptions())
-      .json(userPayload)
+      .json({ ...userPayload, token })
   } catch (error) {
     next(error)
   }

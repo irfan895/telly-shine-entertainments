@@ -4,6 +4,7 @@ import sanitizeHtml from "sanitize-html"
 import Post from "../models/post.model.js"
 import User from "../models/user.model.js"
 import { errorHandler } from "../utils/error.js"
+import { extractToken } from "../utils/verifyUser.js"
 import { normalizeCategory, normalizePost, normalizeUser } from "../utils/normalize.js"
 import { syncEntertainmentNews } from "../utils/newsAggregator.js"
 import { logActivity } from "../utils/activityLogger.js"
@@ -40,7 +41,7 @@ const buildUniqueSlug = async (title, excludeId = null) => {
 }
 
 const isAuthenticatedAdmin = (req) => {
-  const token = req.cookies?.access_token
+  const token = extractToken(req)
   if (!token) return false
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET)

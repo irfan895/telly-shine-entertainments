@@ -1,8 +1,17 @@
 import { errorHandler } from "./error.js"
 import jwt from "jsonwebtoken"
 
+export const extractToken = (req) => {
+  if (req.cookies?.access_token) return req.cookies.access_token
+  const authHeader = req.headers?.authorization || ""
+  if (authHeader.startsWith("Bearer ")) {
+    return authHeader.slice(7).trim()
+  }
+  return null
+}
+
 export const verifyToken = (req, res, next) => {
-  const token = req.cookies.access_token
+  const token = extractToken(req)
 
   if (!token) {
     return next(errorHandler(401, "Unauthorized: Please sign in to continue"))

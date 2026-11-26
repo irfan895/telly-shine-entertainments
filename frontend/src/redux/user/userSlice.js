@@ -16,6 +16,9 @@ const userSlice = createSlice({
     },
 
     signInSuccess: (state, action) => {
+      if (action.payload?.token) {
+        localStorage.setItem("ts_auth_token", action.payload.token)
+      }
       state.currentUser = action.payload
       state.loading = false
       state.error = null
@@ -48,6 +51,7 @@ const userSlice = createSlice({
     },
 
     deleteUserSuccess: (state) => {
+      localStorage.removeItem("ts_auth_token")
       state.currentUser = null
       state.loading = false
       state.error = null
@@ -59,6 +63,7 @@ const userSlice = createSlice({
     },
 
     signOutSuccess: (state) => {
+      localStorage.removeItem("ts_auth_token")
       state.currentUser = null
       state.error = null
       state.loading = false

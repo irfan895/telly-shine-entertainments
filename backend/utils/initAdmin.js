@@ -5,6 +5,7 @@ import User from "../models/user.model.js"
 export const initializeAdminAccount = async () => {
   const rawEmail = process.env.ADMIN_EMAIL
   const rawPassword = process.env.ADMIN_PASSWORD
+  const forceReset = String(process.env.ADMIN_FORCE_RESET || "").toLowerCase() === "true"
 
   if (!rawEmail || !rawPassword) {
     console.error(
@@ -24,9 +25,25 @@ export const initializeAdminAccount = async () => {
 
   try {
     const existing = await User.findOne({ email })
+
     if (existing) {
-      // Preserve existing password; only ensure admin privileges & active status
-      if (!existing.isAdmin || !existing.is_admin || existing.role !== "admin" || existing.is_active === false) {
+      let changed = false
+
+      if (forceReset) {
+        const passwordHash = await bcryptjs.hash(rawPassword, 12)
+        existing.password = passwordHash
+        existing.password_hash = passwordHash
+        existing.mustChangePassword = false
+        changed = true
+      }
+
+      if (
+        !existing.isAdmin ||
+        !existing.is_admin ||
+        existing.role !== "admin" ||
+        existing.is_active === false ||
+        !existing.user_id
+      ) {
         existing.isAdmin = true
         existing.is_admin = true
         existing.role = "admin"
@@ -34,8 +51,16 @@ export const initializeAdminAccount = async () => {
         if (!existing.user_id) {
           existing.user_id = crypto.randomUUID().replace(/-/g, "")
         }
+        changed = true
+      }
+
+      if (changed) {
         await existing.save()
-        console.log("Verified existing administrator privileges.")
+        console.log(
+          forceReset
+            ? "Administrator password reset and privileges verified."
+            : "Verified existing administrator privileges."
+        )
       }
       return
     }
@@ -51,6 +76,7 @@ export const initializeAdminAccount = async () => {
       full_name: "Telly Shine Admin",
       email,
       password: passwordHash,
+      password_hash: passwordHash,
       isAdmin: true,
       is_admin: true,
       role: "admin",
