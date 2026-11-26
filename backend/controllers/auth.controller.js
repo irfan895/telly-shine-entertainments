@@ -6,6 +6,7 @@ import Otp from "../models/otp.model.js"
 import { errorHandler } from "../utils/error.js"
 import { verifyFirebaseIdToken } from "../utils/firebaseAdmin.js"
 import { normalizeUser } from "../utils/normalize.js"
+import { logActivity } from "../utils/activityLogger.js"
 
 const getCookieOptions = () => ({
   httpOnly: true,
@@ -103,8 +104,12 @@ export const signin = async (req, res, next) => {
       return next(errorHandler(400, "Invalid email or password"))
     }
 
-    const token = signAuthToken(validUser)
     const userPayload = normalizeUser(validUser)
+    if (!userPayload.is_active) {
+      return next(errorHandler(403, "Your account has been deactivated. Contact support."))
+    }
+
+    const token = signAuthToken(validUser)
 
     res
       .status(200)
@@ -141,8 +146,20 @@ export const adminSignin = async (req, res, next) => {
         errorHandler(403, "Access denied: Administrator privileges required")
       )
     }
+    if (!userPayload.is_active) {
+      return next(errorHandler(403, "Administrator account is deactivated."))
+    }
 
     const token = signAuthToken(validUser)
+
+    await logActivity({
+      action: "ADMIN_LOGIN",
+      actorId: userPayload._id,
+      actorEmail: userPayload.email,
+      targetType: "user",
+      targetId: userPayload._id,
+      details: "Administrator signed in",
+    })
 
     res
       .status(200)

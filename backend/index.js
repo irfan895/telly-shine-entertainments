@@ -12,7 +12,10 @@ import postRoutes from "./routes/post.route.js"
 import commentRoutes from "./routes/comment.route.js"
 import contactRoutes from "./routes/contact.route.js"
 import categoryRoutes from "./routes/category.route.js"
+import adminRoutes from "./routes/admin.route.js"
+import newsletterRoutes from "./routes/newsletter.route.js"
 import { syncEntertainmentNews } from "./utils/newsAggregator.js"
+import { initializeAdminAccount } from "./utils/initAdmin.js"
 
 dotenv.config()
 
@@ -76,6 +79,8 @@ app.use("/api/post", postRoutes)
 app.use("/api/comment", commentRoutes)
 app.use("/api/contact", contactRoutes)
 app.use("/api/category", categoryRoutes)
+app.use("/api/admin", adminRoutes)
+app.use("/api/newsletter", newsletterRoutes)
 
 app.use((err, req, res, next) => {
   const statusCode = err.statusCode || 500
@@ -90,8 +95,9 @@ app.use((err, req, res, next) => {
 
 mongoose
   .connect(process.env.MONGO_URI)
-  .then(() => {
+  .then(async () => {
     console.log("MongoDB connected to telly_shine_db")
+    await initializeAdminAccount()
     syncEntertainmentNews().catch((e) => console.warn("Initial news sync:", e.message))
     app.listen(PORT, "0.0.0.0", () => {
       console.log(`Telly Shine Entertainment API running on port ${PORT}`)

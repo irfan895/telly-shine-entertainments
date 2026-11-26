@@ -28,6 +28,10 @@ const CATEGORY_LABELS = {
     title: "Movies",
     subtitle: "Box office reports, trailers, film reviews, and cinema updates.",
   },
+  celebrity: {
+    title: "Celebrity News",
+    subtitle: "Celebrity interviews, red carpet moments, and trending star stories.",
+  },
   stories: {
     title: "Stories",
     subtitle: "Feature stories, celebrity profiles, and behind-the-scenes narratives.",

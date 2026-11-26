@@ -22,8 +22,6 @@ import {
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { useToast } from "@/hooks/use-toast"
-import { FaCheck } from "react-icons/fa"
-import { RxCross2 } from "react-icons/rx"
 
 const DashboardUsers = () => {
   const { currentUser } = useSelector((state) => state.user)
@@ -66,6 +64,26 @@ const DashboardUsers = () => {
   const handleSearch = (e) => {
     e.preventDefault()
     fetchUsers(0, false, searchTerm)
+  }
+
+  const handleAdminUpdate = async (userId, payload) => {
+    try {
+      const res = await fetch(`/api/user/admin/${userId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: "Update failed", description: data.message })
+        return
+      }
+      setUsers((prev) => prev.map((u) => (u._id === userId ? data : u)))
+      toast({ title: "User updated." })
+    } catch (error) {
+      toast({ title: "Error", description: error.message })
+    }
   }
 
   const handleDeleteUser = async () => {
@@ -117,8 +135,8 @@ const DashboardUsers = () => {
                 <TableHead>User</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Role</TableHead>
-                <TableHead>Admin</TableHead>
-                <TableHead>Action</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody className="divide-y">
@@ -141,50 +159,74 @@ const DashboardUsers = () => {
                   <TableCell>
                     <span
                       className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
-                        user.isAdmin
-                          ? "bg-red-100 text-red-700"
-                          : "bg-slate-100 text-slate-700"
+                        user.isAdmin ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-700"
                       }`}
                     >
                       {user.isAdmin ? "Admin" : "User"}
                     </span>
                   </TableCell>
                   <TableCell>
-                    {user.isAdmin ? (
-                      <FaCheck className="text-green-600" />
-                    ) : (
-                      <RxCross2 className="text-slate-400" />
-                    )}
+                    <span
+                      className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
+                        user.is_active !== false
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-200 text-gray-700"
+                      }`}
+                    >
+                      {user.is_active !== false ? "Active" : "Inactive"}
+                    </span>
                   </TableCell>
                   <TableCell>
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <button
-                          type="button"
-                          onClick={() => setUserIdToDelete(user._id)}
-                          className="text-sm font-medium text-red-600 hover:underline"
-                        >
-                          Delete
-                        </button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Delete user account?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete {user.email}. The last remaining administrator cannot be deleted.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction
-                            className="bg-red-600 hover:bg-red-700"
-                            onClick={handleDeleteUser}
+                    <div className="flex items-center gap-3 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleAdminUpdate(user._id, {
+                            is_active: user.is_active === false,
+                          })
+                        }
+                        className="text-blue-600 hover:underline"
+                      >
+                        {user.is_active !== false ? "Deactivate" : "Activate"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handleAdminUpdate(user._id, { isAdmin: !user.isAdmin })
+                        }
+                        className="text-amber-600 hover:underline"
+                      >
+                        {user.isAdmin ? "Make User" : "Make Admin"}
+                      </button>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={() => setUserIdToDelete(user._id)}
+                            className="text-red-600 hover:underline"
                           >
                             Delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
+                          </button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete user account?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete {user.email}. The last remaining administrator cannot be deleted.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              className="bg-red-600 hover:bg-red-700"
+                              onClick={handleDeleteUser}
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
@@ -193,10 +235,7 @@ const DashboardUsers = () => {
 
           {showMore && (
             <div className="mt-4 text-center">
-              <Button
-                variant="outline"
-                onClick={() => fetchUsers(users.length, true)}
-              >
+              <Button variant="outline" onClick={() => fetchUsers(users.length, true)}>
                 Show More
               </Button>
             </div>

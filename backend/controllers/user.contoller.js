@@ -3,6 +3,7 @@ import bcryptjs from "bcryptjs"
 import User from "../models/user.model.js"
 import { errorHandler } from "../utils/error.js"
 import { normalizeUser } from "../utils/normalize.js"
+import { logActivity } from "../utils/activityLogger.js"
 
 export const updateUser = async (req, res, next) => {
   if (req.user.id !== req.params.userId) {
@@ -93,7 +94,73 @@ export const deleteUser = async (req, res, next) => {
     }
 
     await User.findByIdAndDelete(req.params.userId)
+    await logActivity({
+      action: "USER_DELETED",
+      actorId: req.user.id,
+      targetType: "user",
+      targetId: req.params.userId,
+      details: normalizedTarget.email || "",
+    })
     res.status(200).json({ success: true, message: "User has been deleted!" })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const adminUpdateUser = async (req, res, next) => {
+  if (!req.user?.isAdmin) {
+    return next(errorHandler(403, "Administrator privileges required"))
+  }
+
+  try {
+    const target = await User.findById(req.params.userId)
+    if (!target) {
+      return next(errorHandler(404, "User not found"))
+    }
+
+    const normalized = normalizeUser(target)
+    const updates = {}
+
+    if (typeof req.body.is_active === "boolean") {
+      if (normalized._id === req.user.id && req.body.is_active === false) {
+        return next(errorHandler(400, "You cannot deactivate your own account"))
+      }
+      updates.is_active = req.body.is_active
+    }
+
+    if (typeof req.body.isAdmin === "boolean") {
+      if (normalized.isAdmin && req.body.isAdmin === false) {
+        const adminCount = await User.countDocuments({
+          $or: [
+            { isAdmin: true },
+            { is_admin: true },
+            { role: { $in: ["admin", "superadmin"] } },
+          ],
+        })
+        if (adminCount <= 1) {
+          return next(errorHandler(400, "Cannot demote the last remaining administrator"))
+        }
+      }
+      updates.isAdmin = req.body.isAdmin
+      updates.is_admin = req.body.isAdmin
+      updates.role = req.body.isAdmin ? "admin" : "user"
+    }
+
+    const updated = await User.findByIdAndUpdate(
+      req.params.userId,
+      { $set: updates },
+      { new: true }
+    )
+
+    await logActivity({
+      action: "USER_UPDATED",
+      actorId: req.user.id,
+      targetType: "user",
+      targetId: req.params.userId,
+      details: `${normalized.email} (${JSON.stringify(updates)})`,
+    })
+
+    res.status(200).json(normalizeUser(updated))
   } catch (error) {
     next(error)
   }

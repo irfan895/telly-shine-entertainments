@@ -40,9 +40,19 @@ const RSS_SOURCES = [
     limit: 5,
   },
   {
-    url: "https://www.bollywoodhungama.com/rss/movie-reviews.xml",
+    url: "https://variety.com/v/film/feed/",
     category: "Movies",
     limit: 5,
+  },
+  {
+    url: "https://www.hollywoodreporter.com/c/movies/feed/",
+    category: "Celebrity News",
+    limit: 5,
+  },
+  {
+    url: "https://variety.com/v/tv/feed/",
+    category: "Blog",
+    limit: 4,
   },
   {
     url: "https://variety.com/v/digital/feed/",

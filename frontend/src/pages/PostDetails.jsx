@@ -38,8 +38,8 @@ const PostDetails = () => {
         setPost(loadedPost)
         setLoading(false)
 
-        document.title = `${loadedPost.title} | Telly Shine Entertainment`
-        const desc = loadedPost.description || loadedPost.excerpt || ""
+        document.title = `${loadedPost.seo_title || loadedPost.title} | Telly Shine Entertainment`
+        const desc = loadedPost.seo_description || loadedPost.description || loadedPost.excerpt || ""
         const metaDesc = document.querySelector('meta[name="description"]')
         if (metaDesc && desc) metaDesc.setAttribute("content", desc)
 

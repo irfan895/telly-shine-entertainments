@@ -6,6 +6,7 @@ import User from "../models/user.model.js"
 import { errorHandler } from "../utils/error.js"
 import { normalizeCategory, normalizePost, normalizeUser } from "../utils/normalize.js"
 import { syncEntertainmentNews } from "../utils/newsAggregator.js"
+import { logActivity } from "../utils/activityLogger.js"
 
 const SANITIZE_OPTIONS = {
   allowedTags: [
@@ -54,7 +55,7 @@ export const create = async (req, res, next) => {
     return next(errorHandler(403, "You are not authorized to create a post!"))
   }
 
-  const { title, content, category, image, description, status, is_featured, is_trending, is_breaking, tags } = req.body
+  const { title, content, category, image, description, status, is_featured, is_trending, is_breaking, tags, seo_title, seo_description } = req.body
 
   if (!title || !title.trim() || !content || !content.trim()) {
     return next(errorHandler(400, "Article title and content are required!"))
@@ -87,6 +88,8 @@ export const create = async (req, res, next) => {
       is_featured: Boolean(is_featured),
       is_trending: Boolean(is_trending),
       is_breaking: Boolean(is_breaking),
+      seo_title: (seo_title || "").trim(),
+      seo_description: (seo_description || "").trim(),
       tags: Array.isArray(tags)
         ? tags.map((t) => String(t).trim()).filter(Boolean)
         : typeof tags === "string"
@@ -99,6 +102,13 @@ export const create = async (req, res, next) => {
     })
 
     const savedPost = await newPost.save()
+    await logActivity({
+      action: articleStatus === "published" ? "ARTICLE_PUBLISHED" : "ARTICLE_DRAFT_CREATED",
+      actorId: req.user.id,
+      targetType: "article",
+      targetId: savedPost._id,
+      details: savedPost.title,
+    })
     res.status(201).json(normalizePost(savedPost))
   } catch (error) {
     next(error)
@@ -189,6 +199,10 @@ export const getPosts = async (req, res, next) => {
       ],
     })
 
+    if (req.query.slug && posts.length === 1) {
+      Post.updateOne({ _id: posts[0]._id }, { $inc: { views_count: 1 } }).catch(() => {})
+    }
+
     res.status(200).json({
       posts: posts.map(normalizePost),
       totalPosts,
@@ -211,6 +225,14 @@ export const deletepost = async (req, res, next) => {
     if (!deleted) {
       return next(errorHandler(404, "Article not found"))
     }
+    await logActivity({
+      action: "ARTICLE_DELETED",
+      actorId: req.user.id,
+      targetType: "article",
+      targetId: req.params.postId,
+      details: deleted.title || "",
+    })
+
     res.status(200).json({ success: true, message: "Article has been deleted!" })
   } catch (error) {
     next(error)
@@ -258,6 +280,8 @@ export const updatepost = async (req, res, next) => {
     if (req.body.is_featured !== undefined) updates.is_featured = Boolean(req.body.is_featured)
     if (req.body.is_trending !== undefined) updates.is_trending = Boolean(req.body.is_trending)
     if (req.body.is_breaking !== undefined) updates.is_breaking = Boolean(req.body.is_breaking)
+    if (req.body.seo_title !== undefined) updates.seo_title = String(req.body.seo_title).trim()
+    if (req.body.seo_description !== undefined) updates.seo_description = String(req.body.seo_description).trim()
     if (req.body.tags !== undefined) {
       updates.tags = Array.isArray(req.body.tags)
         ? req.body.tags.map((t) => String(t).trim()).filter(Boolean)
@@ -273,6 +297,14 @@ export const updatepost = async (req, res, next) => {
       { new: true }
     )
 
+    await logActivity({
+      action: "ARTICLE_UPDATED",
+      actorId: req.user.id,
+      targetType: "article",
+      targetId: req.params.postId,
+      details: updatedPost.title,
+    })
+
     res.status(200).json(normalizePost(updatedPost))
   } catch (error) {
     next(error)
@@ -285,6 +317,10 @@ export const syncNews = async (req, res, next) => {
   }
   try {
     const result = await syncEntertainmentNews({ force: true })
+    if (req.query.slug && posts.length === 1) {
+      Post.updateOne({ _id: posts[0]._id }, { $inc: { views_count: 1 } }).catch(() => {})
+    }
+
     res.status(200).json({ success: true, ...result })
   } catch (error) {
     next(error)

@@ -29,6 +29,7 @@ const CATEGORY_SECTIONS = [
   { name: "TV & Television", slug: "television" },
   { name: "Digital", slug: "digital" },
   { name: "Movies", slug: "movies" },
+  { name: "Celebrity News", slug: "celebrity" },
   { name: "Stories", slug: "stories" },
   { name: "Blog", slug: "blog" },
 ]
@@ -36,6 +37,30 @@ const CATEGORY_SECTIONS = [
 const Home = () => {
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [newsletterEmail, setNewsletterEmail] = useState("")
+  const [newsletterStatus, setNewsletterStatus] = useState("")
+  const [subscribing, setSubscribing] = useState(false)
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault()
+    if (!newsletterEmail.trim() || subscribing) return
+    try {
+      setSubscribing(true)
+      setNewsletterStatus("")
+      const res = await fetch("/api/newsletter/subscribe", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: newsletterEmail }),
+      })
+      const data = await res.json()
+      setNewsletterStatus(data.message || "Subscribed!")
+      if (res.ok) setNewsletterEmail("")
+    } catch {
+      setNewsletterStatus("Unable to subscribe right now. Please try again.")
+    } finally {
+      setSubscribing(false)
+    }
+  }
 
   useEffect(() => {
     document.title = "Telly Shine Entertainment — Bollywood, TV, Digital & Movie News"
@@ -287,6 +312,38 @@ const Home = () => {
           >
             <Youtube className="w-5 h-5" /> Watch on YouTube
           </a>
+        </div>
+      </section>
+
+      {/* Newsletter Subscription */}
+      <section className="bg-white border-t border-gray-200 py-14">
+        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
+          <h2 className="text-2xl md:text-3xl font-black text-slate-950">
+            Subscribe to Our Entertainment Newsletter
+          </h2>
+          <p className="mt-2 text-sm sm:text-base text-slate-600">
+            Get breaking Bollywood, Hollywood, TV, and OTT stories delivered straight to your inbox.
+          </p>
+          <form onSubmit={handleSubscribe} className="mt-6 flex flex-col sm:flex-row gap-3">
+            <input
+              type="email"
+              required
+              placeholder="Enter your email address..."
+              value={newsletterEmail}
+              onChange={(e) => setNewsletterEmail(e.target.value)}
+              className="flex-1 h-11 rounded-lg border border-gray-300 px-4 text-sm focus:outline-none focus:border-red-600"
+            />
+            <Button
+              type="submit"
+              disabled={subscribing}
+              className="h-11 bg-red-600 hover:bg-red-700 text-white px-6 font-semibold"
+            >
+              {subscribing ? "Subscribing..." : "Subscribe"}
+            </Button>
+          </form>
+          {newsletterStatus && (
+            <p className="mt-3 text-sm font-medium text-slate-700">{newsletterStatus}</p>
+          )}
         </div>
       </section>
 

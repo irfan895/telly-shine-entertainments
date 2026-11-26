@@ -16,6 +16,7 @@ const DashboardCategories = () => {
   const [categories, setCategories] = useState([])
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
+  const [editingId, setEditingId] = useState(null)
   const [submitting, setSubmitting] = useState(false)
 
   const fetchCategories = async () => {
@@ -34,14 +35,17 @@ const DashboardCategories = () => {
     fetchCategories()
   }, [])
 
-  const handleAddCategory = async (e) => {
+  const handleSubmitCategory = async (e) => {
     e.preventDefault()
     if (!name.trim() || submitting) return
 
     try {
       setSubmitting(true)
-      const res = await fetch("/api/category", {
-        method: "POST",
+      const url = editingId ? `/api/category/${editingId}` : "/api/category"
+      const method = editingId ? "PUT" : "POST"
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ name, description }),
@@ -49,19 +53,26 @@ const DashboardCategories = () => {
       const data = await res.json()
 
       if (!res.ok) {
-        toast({ title: "Could not create category", description: data.message })
+        toast({ title: "Operation failed", description: data.message })
         return
       }
 
       setName("")
       setDescription("")
-      toast({ title: "Category added!" })
+      setEditingId(null)
+      toast({ title: editingId ? "Category updated!" : "Category added!" })
       fetchCategories()
     } catch (error) {
       toast({ title: "Error", description: error.message })
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const handleEdit = (cat) => {
+    setEditingId(cat._id)
+    setName(cat.name)
+    setDescription(cat.description || "")
   }
 
   const handleDelete = async (id) => {
@@ -86,8 +97,10 @@ const DashboardCategories = () => {
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl border border-gray-200 p-5 shadow-sm">
-        <h2 className="text-lg font-bold text-slate-900 mb-4">Add Category</h2>
-        <form onSubmit={handleAddCategory} className="grid sm:grid-cols-3 gap-3">
+        <h2 className="text-lg font-bold text-slate-900 mb-4">
+          {editingId ? "Edit Category" : "Add Category"}
+        </h2>
+        <form onSubmit={handleSubmitCategory} className="grid sm:grid-cols-3 gap-3">
           <Input
             type="text"
             placeholder="Category name (e.g. Bollywood)"
@@ -101,13 +114,28 @@ const DashboardCategories = () => {
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
-          <Button
-            type="submit"
-            disabled={submitting}
-            className="bg-red-600 hover:bg-red-700 text-white"
-          >
-            {submitting ? "Adding..." : "Add Category"}
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+            >
+              {submitting ? "Saving..." : editingId ? "Update Category" : "Add Category"}
+            </Button>
+            {editingId && (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setEditingId(null)
+                  setName("")
+                  setDescription("")
+                }}
+              >
+                Cancel
+              </Button>
+            )}
+          </div>
         </form>
       </div>
 
@@ -119,7 +147,7 @@ const DashboardCategories = () => {
               <TableHead>Name</TableHead>
               <TableHead>Slug</TableHead>
               <TableHead>Description</TableHead>
-              <TableHead>Action</TableHead>
+              <TableHead>Actions</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody className="divide-y">
@@ -130,13 +158,22 @@ const DashboardCategories = () => {
                 <TableCell className="text-sm text-slate-600">{cat.description}</TableCell>
                 <TableCell>
                   {cat._id ? (
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(cat._id)}
-                      className="text-xs font-semibold text-red-600 hover:underline"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-3 text-xs font-semibold">
+                      <button
+                        type="button"
+                        onClick={() => handleEdit(cat)}
+                        className="text-blue-600 hover:underline"
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(cat._id)}
+                        className="text-red-600 hover:underline"
+                      >
+                        Delete
+                      </button>
+                    </div>
                   ) : (
                     <span className="text-xs text-slate-400">Default</span>
                   )}

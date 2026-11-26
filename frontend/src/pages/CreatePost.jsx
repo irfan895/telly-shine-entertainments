@@ -50,6 +50,8 @@ const CreatePost = () => {
     category: "Blog",
     description: "",
     tags: "",
+    seo_title: "",
+    seo_description: "",
     image: "",
     content: "",
     is_featured: false,
@@ -415,6 +417,30 @@ const CreatePost = () => {
                 className="h-4 w-4 accent-red-600"
               />
             </label>
+
+            <div className="pt-2 border-t border-gray-100 space-y-3">
+              <p className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                SEO Metadata (Optional)
+              </p>
+              <Input
+                type="text"
+                placeholder="SEO Title"
+                value={formData.seo_title}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, seo_title: e.target.value }))
+                }
+                className="text-xs h-9"
+              />
+              <Textarea
+                rows={2}
+                placeholder="SEO Meta Description"
+                value={formData.seo_description}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, seo_description: e.target.value }))
+                }
+                className="text-xs"
+              />
+            </div>
 
             <div className="pt-2 border-t border-gray-100 text-xs text-slate-500">
               Visibility: <strong className="text-slate-800">Public when published</strong>
