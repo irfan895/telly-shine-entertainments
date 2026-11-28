@@ -110,13 +110,13 @@ const ForgotPassword = () => {
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
-          {message && <p className="text-sm text-green-700">{message}</p>}
+          {error && <p className="text-sm text-burgundy">{error}</p>}
+          {message && <p className="text-sm text-charcoal">{message}</p>}
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 text-white"
+            className="w-full bg-burgundy hover:bg-burgundy-dark text-ivory rounded-sm"
           >
             {loading ? "Sending Code..." : "Send Reset Code"}
           </Button>
@@ -162,20 +162,20 @@ const ForgotPassword = () => {
             />
           </div>
 
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-burgundy">{error}</p>}
 
           <Button
             type="submit"
             disabled={loading}
-            className="w-full bg-red-600 hover:bg-red-700 text-white"
+            className="w-full bg-burgundy hover:bg-burgundy-dark text-ivory rounded-sm"
           >
             {loading ? "Resetting..." : "Reset Password"}
           </Button>
         </form>
       )}
 
-      <div className="mt-5 text-center text-sm text-slate-600">
-        <Link to="/sign-in" className="text-red-600 font-semibold hover:underline">
+      <div className="mt-5 text-center text-sm text-ink-muted">
+        <Link to="/sign-in" className="text-burgundy font-semibold hover:underline">
           ← Back to Sign In
         </Link>
       </div>

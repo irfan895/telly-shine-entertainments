@@ -22,6 +22,7 @@ import ReactQuill from "react-quill"
 import "react-quill/dist/quill.snow.css"
 import { useSelector } from "react-redux"
 import { useNavigate, useParams } from "react-router-dom"
+import { normalizeArticle } from "@/lib/rssNormalize"
 
 const CATEGORIES = ["Bollywood", "Hollywood", "Television", "Digital", "Movies", "Stories", "Blog", "Podcasts"]
 
@@ -75,7 +76,11 @@ const EditPost = () => {
           return
         }
 
-        const p = data.posts[0]
+        const p = normalizeArticle(data.posts[0])
+        if (!p) {
+          setUpdatePostError("Article data is invalid.")
+          return
+        }
         setFormData({
           title: p.title || "",
           category: p.category || "Blog",

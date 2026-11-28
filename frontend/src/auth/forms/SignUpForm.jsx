@@ -174,12 +174,12 @@ const SignUpForm = () => {
             />
 
             {errorMessage && (
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <p className="text-sm text-burgundy">{errorMessage}</p>
             )}
 
             <Button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
+              className="w-full bg-burgundy hover:bg-burgundy-dark text-ivory rounded-sm"
               disabled={loading}
             >
               {loading ? "Creating Account..." : "Create Account"}
@@ -190,10 +190,10 @@ const SignUpForm = () => {
         </Form>
 
         <div className="flex justify-center gap-2 text-sm">
-          <span className="text-slate-600">Already have an account?</span>
+          <span className="text-ink-muted">Already have an account?</span>
           <Link
             to="/sign-in"
-            className="font-semibold text-red-600 hover:underline"
+            className="font-semibold text-burgundy hover:underline"
           >
             Sign In
           </Link>

@@ -1,5 +1,6 @@
 import React from "react"
 import { BrowserRouter, Route, Routes } from "react-router-dom"
+import { MotionConfig } from "framer-motion"
 import SignInForm from "./auth/forms/SignInForm"
 import SignUpForm from "./auth/forms/SignUpForm"
 import Home from "./pages/Home"
@@ -32,7 +33,8 @@ import NotFound from "./pages/NotFound"
 
 const App = () => {
   return (
-    <BrowserRouter>
+    <MotionConfig reducedMotion="user">
+      <BrowserRouter>
       <Header />
       <ScrollToTop />
       <Routes>
@@ -113,6 +115,7 @@ const App = () => {
       <Footer />
       <Toaster />
     </BrowserRouter>
+    </MotionConfig>
   )
 }
 

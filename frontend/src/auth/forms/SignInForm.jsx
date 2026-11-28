@@ -120,19 +120,19 @@ const SignInForm = () => {
             <div className="flex justify-end">
               <Link
                 to="/forgot-password"
-                className="text-xs font-medium text-red-600 hover:underline"
+                className="text-xs font-medium text-burgundy hover:underline"
               >
                 Forgot password?
               </Link>
             </div>
 
             {errorMessage && (
-              <p className="text-sm text-red-600">{errorMessage}</p>
+              <p className="text-sm text-burgundy">{errorMessage}</p>
             )}
 
             <Button
               type="submit"
-              className="w-full bg-red-600 hover:bg-red-700 text-white"
+              className="w-full bg-burgundy hover:bg-burgundy-dark text-ivory rounded-sm"
               disabled={loading}
             >
               {loading ? "Signing In..." : "Sign In"}
@@ -142,14 +142,14 @@ const SignInForm = () => {
           </form>
         </Form>
 
-        <div className="flex justify-between text-sm text-slate-600">
+        <div className="flex justify-between text-sm text-ink-muted">
           <span>
             Don&apos;t have an account?{" "}
-            <Link to="/sign-up" className="font-semibold text-red-600 hover:underline">
+            <Link to="/sign-up" className="font-semibold text-burgundy hover:underline">
               Sign Up
             </Link>
           </span>
-          <Link to="/admin/login" className="text-slate-500 hover:text-slate-900 hover:underline">
+          <Link to="/admin/login" className="text-ink-muted hover:text-charcoal hover:underline">
             Admin Login
           </Link>
         </div>

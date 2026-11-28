@@ -1,7 +1,25 @@
 import PostCard from "@/components/shared/PostCard"
+import ErrorBoundary from "@/components/shared/ErrorBoundary"
 import { Button } from "@/components/ui/button"
 import { getFallbackImage, handleImageError } from "@/lib/imageFallback"
-import { ArrowRight, Youtube, Instagram, Facebook, Flame, Sparkles, PlayCircle } from "lucide-react"
+import { normalizeArticles } from "@/lib/rssNormalize"
+import {
+  EDITORIAL_EASE,
+  PageTransition,
+  RevealSection,
+  StaggerGrid,
+  StaggerItem,
+} from "@/components/editorial/MotionPrimitives"
+import { motion } from "framer-motion"
+import {
+  ArrowRight,
+  ArrowUpRight,
+  Youtube,
+  Instagram,
+  Facebook,
+  Play,
+  Mail,
+} from "lucide-react"
 import React, { useEffect, useState } from "react"
 import { Link } from "react-router-dom"
 
@@ -23,16 +41,121 @@ const SOCIAL_LINKS = [
   },
 ]
 
-const CATEGORY_SECTIONS = [
-  { name: "Bollywood", slug: "bollywood" },
-  { name: "Hollywood", slug: "hollywood" },
-  { name: "TV & Television", slug: "television" },
-  { name: "Digital", slug: "digital" },
-  { name: "Movies", slug: "movies" },
-  { name: "Celebrity News", slug: "celebrity" },
-  { name: "Stories", slug: "stories" },
-  { name: "Blog", slug: "blog" },
-]
+const SectionHeading = ({ kicker, title, linkTo, linkLabel, dark = false }) => (
+  <div
+    className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 mb-8 border-b ${
+      dark ? "border-ivory/15" : "border-stone"
+    }`}
+  >
+    <div>
+      {kicker && (
+        <p
+          className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${
+            dark ? "text-gold" : "text-burgundy"
+          }`}
+        >
+          {kicker}
+        </p>
+      )}
+      <h2
+        className={`font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-1 ${
+          dark ? "text-ivory" : "text-charcoal"
+        }`}
+      >
+        {title}
+      </h2>
+    </div>
+    {linkTo && (
+      <Link
+        to={linkTo}
+        className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] transition-colors shrink-0 ${
+          dark
+            ? "text-gold hover:text-ivory"
+            : "text-burgundy hover:text-charcoal"
+        }`}
+      >
+        {linkLabel} <ArrowUpRight className="w-4 h-4" />
+      </Link>
+    )}
+  </div>
+)
+
+const EmptyCategoryState = ({ name, dark = false }) => (
+  <div
+    className={`rounded-sm border border-dashed p-10 text-center text-sm ${
+      dark
+        ? "border-ivory/20 text-ivory/55 bg-soft-black/40"
+        : "border-stone text-ink-muted bg-ivory-light/60"
+    }`}
+  >
+    No published articles in {name} yet. Stories from the Telly Shine editorial desk will appear here.
+  </div>
+)
+
+const CategoryBand = ({
+  kicker,
+  title,
+  slug,
+  posts,
+  dark = false,
+  cream = false,
+  asymmetric = false,
+}) => {
+  const bgClass = dark
+    ? "bg-charcoal text-ivory"
+    : cream
+    ? "bg-ivory-light border-y border-stone"
+    : "bg-ivory"
+
+  return (
+    <section className={`${bgClass} py-14 md:py-16`}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <RevealSection>
+          <SectionHeading
+            kicker={kicker}
+            title={title}
+            linkTo={`/category/${slug}`}
+            linkLabel={`Explore ${title}`}
+            dark={dark}
+          />
+        </RevealSection>
+
+        {posts.length > 0 ? (
+          asymmetric && posts.length >= 2 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-7">
+              <RevealSection className="lg:col-span-7">
+                <ErrorBoundary inline>
+                  <PostCard post={posts[0]} variant="featured" />
+                </ErrorBoundary>
+              </RevealSection>
+              <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+                {posts.slice(1, 3).map((post) => (
+                  <RevealSection key={post._id} delay={0.1}>
+                    <ErrorBoundary inline>
+                      <PostCard post={post} variant={dark ? "dark" : "default"} />
+                    </ErrorBoundary>
+                  </RevealSection>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+              {posts.map((post) => (
+                <StaggerItem key={post._id}>
+                  <ErrorBoundary inline>
+                    <PostCard post={post} variant={dark ? "dark" : "default"} />
+                  </ErrorBoundary>
+                </StaggerItem>
+              ))}
+            </StaggerGrid>
+          )
+        ) : (
+          <EmptyCategoryState name={title} dark={dark} />
+        )}
+      </div>
+    </section>
+  )
+}
 
 const Home = () => {
   const [posts, setPosts] = useState([])
@@ -63,14 +186,15 @@ const Home = () => {
   }
 
   useEffect(() => {
-    document.title = "Telly Shine Entertainment — Bollywood, TV, Digital & Movie News"
+    document.title =
+      "Telly Shine Entertainment — Bollywood, Hollywood, TV, Digital & Cinema"
     const fetchPosts = async () => {
       try {
         setLoading(true)
         const res = await fetch("/api/post/getposts?limit=50")
         const data = await res.json()
         if (res.ok) {
-          setPosts(data.posts || [])
+          setPosts(normalizeArticles(data.posts || []))
         }
       } catch (error) {
         console.error("Unable to load articles:", error)
@@ -81,297 +205,472 @@ const Home = () => {
     fetchPosts()
   }, [])
 
-  const featuredPosts = posts.filter((p) => p.is_featured).slice(0, 3)
+  const featuredPosts = posts.filter((p) => p.is_featured).slice(0, 4)
   const heroPost = featuredPosts[0] || posts[0] || null
+  const heroSidePosts = (
+    featuredPosts.length > 1 ? featuredPosts.slice(1, 4) : posts.slice(1, 4)
+  ).filter((p) => !heroPost || p._id !== heroPost._id)
+
   const breakingPosts = posts.filter((p) => p.is_breaking)
-  const tickerPosts = (breakingPosts.length > 0 ? breakingPosts : posts).slice(0, 6)
-  const trendingPosts = posts.filter((p) => p.is_trending).slice(0, 3)
+  const tickerPosts = (breakingPosts.length > 0 ? breakingPosts : posts).slice(0, 8)
+
+  const trendingPosts = posts.filter((p) => p.is_trending).slice(0, 5)
+  const topHeadlines = (trendingPosts.length > 0 ? trendingPosts : posts.slice(0, 5))
+  const leadHeadline = topHeadlines[0] || null
+  const headlineList = topHeadlines.slice(1, 5)
+
   const latestPosts = posts.slice(0, 6)
 
-  const getPostsByCategory = (slug) =>
-    posts
+  const getPostsByCategory = (slugs) => {
+    const slugList = Array.isArray(slugs) ? slugs : [slugs]
+    return posts
       .filter((p) => {
         const pSlug = (p.category_slug || "").toLowerCase()
-        if (slug === "digital") return pSlug === "digital" || pSlug === "digital-ott"
-        return pSlug === slug
+        return slugList.includes(pSlug)
       })
       .slice(0, 3)
+  }
+
+  const bollywoodPosts = getPostsByCategory("bollywood")
+  const hollywoodPosts = getPostsByCategory("hollywood")
+  const tvPosts = getPostsByCategory("television")
+  const digitalPosts = getPostsByCategory(["digital", "digital-ott"])
+  const moviesPosts = getPostsByCategory("movies")
+  const celebrityStoriesPosts = getPostsByCategory(["celebrity", "stories"])
 
   return (
-    <main className="bg-white min-h-screen">
-      {/* Breaking News Ticker */}
-      {posts.length > 0 && (
-        <div className="bg-red-600 text-white text-xs sm:text-sm py-2 px-4">
-          <div className="max-w-7xl mx-auto flex items-center gap-3 overflow-hidden">
-            <span className="shrink-0 rounded bg-slate-950 px-2 py-0.5 text-[11px] font-black uppercase tracking-wider">
-              Breaking News
-            </span>
-            <div className="flex items-center gap-6 overflow-x-auto no-scrollbar whitespace-nowrap">
-              {tickerPosts.map((item) => (
-                <Link
-                  key={item._id}
-                  to={`/post/${item.slug}`}
-                  className="hover:underline font-medium shrink-0"
-                >
-                  • {item.title}
-                </Link>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Hero Section */}
-      <section className="border-b border-gray-200 bg-slate-950 text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-12 md:py-16">
-          {heroPost ? (
-            <div className="grid md:grid-cols-2 gap-8 items-center">
-              <div>
-                <span className="inline-block rounded-full bg-red-600 px-3 py-1 text-xs font-bold uppercase tracking-wider text-white">
-                  {heroPost.category || "Featured Story"}
-                </span>
-                <h1 className="mt-4 text-3xl md:text-5xl font-black leading-tight text-white">
-                  {heroPost.title}
-                </h1>
-                {(heroPost.description || heroPost.excerpt) && (
-                  <p className="mt-4 text-slate-300 text-base md:text-lg leading-relaxed line-clamp-3">
-                    {heroPost.description || heroPost.excerpt}
-                  </p>
-                )}
-                <div className="mt-6 flex flex-wrap gap-3">
-                  <Link to={`/post/${heroPost.slug}`}>
-                    <Button className="bg-red-600 hover:bg-red-700 text-white">
-                      Read Full Story <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </Link>
-                  <Link to="/news">
-                    <Button
-                      variant="outline"
-                      className="border-white/40 bg-transparent text-white hover:bg-white hover:text-slate-950"
+    <PageTransition>
+      <main className="bg-ivory min-h-screen text-charcoal">
+        {/* 2. Breaking News Animated Ticker */}
+        {tickerPosts.length > 0 && (
+          <div className="bg-charcoal text-ivory border-b border-soft-black overflow-hidden">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center h-10">
+              <span className="shrink-0 inline-flex items-center gap-2 bg-burgundy text-ivory px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.18em] rounded-sm mr-4">
+                <span className="w-1.5 h-1.5 rounded-full bg-ivory animate-pulse" />
+                Breaking
+              </span>
+              <div className="relative flex-1 overflow-hidden">
+                <div className="animate-ticker items-center gap-10 whitespace-nowrap text-xs font-medium text-ivory/85">
+                  {[...tickerPosts, ...tickerPosts].map((item, idx) => (
+                    <Link
+                      key={`${item._id}-${idx}`}
+                      to={`/post/${item.slug}`}
+                      className="inline-flex items-center gap-3 hover:text-gold transition-colors"
                     >
-                      All Articles
-                    </Button>
-                  </Link>
-                </div>
-              </div>
-              <Link
-                to={`/post/${heroPost.slug}`}
-                className="block rounded-2xl overflow-hidden shadow-2xl h-64 md:h-96 bg-slate-900"
-              >
-                <img
-                  src={heroPost.image || heroPost.featured_image || getFallbackImage(heroPost.category_slug)}
-                  alt={heroPost.title}
-                  onError={(e) => handleImageError(e, heroPost.category_slug)}
-                  className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
-                />
-              </Link>
-            </div>
-          ) : (
-            <div className="max-w-3xl py-6">
-              <p className="text-red-400 font-bold uppercase tracking-widest text-xs">
-                Telly Shine Entertainment
-              </p>
-              <h1 className="mt-3 text-4xl md:text-6xl font-black leading-tight">
-                Your Entertainment, In The Spotlight
-              </h1>
-              <p className="mt-4 text-slate-300 text-lg leading-relaxed">
-                Television, Digital, Movies, Stories, and Podcasts — curated by Telly Shine Entertainment.
-              </p>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Featured Articles */}
-      {featuredPosts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Sparkles className="h-5 w-5 text-red-600" />
-              <h2 className="text-2xl font-black text-slate-950">Featured Articles</h2>
-            </div>
-            <Link to="/news" className="text-sm font-semibold text-red-600 hover:underline">
-              Explore all →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {featuredPosts.map((post) => (
-              <PostCard key={post._id} post={post} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Latest News */}
-      <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-b border-gray-100">
-        <div className="flex items-end justify-between gap-4 mb-6">
-          <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-red-600">
-              Fresh Off The Desk
-            </p>
-            <h2 className="text-2xl md:text-3xl font-black text-slate-950 mt-1">
-              Latest News
-            </h2>
-          </div>
-          <Link to="/news" className="text-sm font-semibold text-red-600 hover:underline">
-            View all articles →
-          </Link>
-        </div>
-
-        {loading ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[1, 2, 3].map((n) => (
-              <div key={n} className="h-80 rounded-xl bg-gray-100 animate-pulse" />
-            ))}
-          </div>
-        ) : latestPosts.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {latestPosts.map((post) => (
-              <PostCard key={post._id} post={post} />
-            ))}
-          </div>
-        ) : (
-          <div className="rounded-xl border border-dashed border-gray-300 p-10 text-center text-slate-500">
-            No published articles yet. Stories published by the Telly Shine editorial team will appear here.
-          </div>
-        )}
-      </section>
-
-      {/* Trending Articles */}
-      {trendingPosts.length > 0 && (
-        <section className="max-w-7xl mx-auto px-4 sm:px-6 py-12 border-b border-gray-100">
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-red-600" />
-              <h2 className="text-2xl font-black text-slate-950">Trending Now</h2>
-            </div>
-            <Link to="/news" className="text-sm font-semibold text-red-600 hover:underline">
-              See more →
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            {trendingPosts.map((post) => (
-              <PostCard key={post._id} post={post} />
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Category Sections: Blog, Television, Digital, Movies, Stories, Podcasts */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 divide-y divide-gray-100">
-        {CATEGORY_SECTIONS.map((cat) => {
-          const catPosts = getPostsByCategory(cat.slug)
-          return (
-            <section key={cat.slug} className="py-10">
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-2xl font-black text-slate-950 border-l-4 border-red-600 pl-3">
-                  {cat.name}
-                </h2>
-                <Link
-                  to={`/category/${cat.slug}`}
-                  className="text-sm font-semibold text-red-600 hover:underline"
-                >
-                  More {cat.name} →
-                </Link>
-              </div>
-              {catPosts.length > 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {catPosts.map((post) => (
-                    <PostCard key={post._id} post={post} />
+                      <span className="text-gold text-[10px]">&diams;</span>
+                      <span>{item.title}</span>
+                    </Link>
                   ))}
                 </div>
-              ) : (
-                <div className="rounded-xl border border-dashed border-gray-200 p-8 text-center text-sm text-slate-500">
-                  No published articles in {cat.name} yet.
-                </div>
-              )}
-            </section>
-          )
-        })}
-      </div>
-
-      {/* Entertainment Videos Section */}
-      <section className="bg-slate-950 text-white py-14 mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="max-w-2xl">
-            <span className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-red-400">
-              <PlayCircle className="w-4 h-4" /> Telly Shine Originals
-            </span>
-            <h2 className="text-2xl md:text-3xl font-black mt-2">
-              Entertainment Videos &amp; Celebrity Interviews
-            </h2>
-            <p className="mt-2 text-slate-300 text-sm sm:text-base">
-              Watch exclusive actor interviews, serial promos, red carpet highlights, and Bollywood updates on our official YouTube channel.
-            </p>
+              </div>
+            </div>
           </div>
-          <a
-            href="https://youtube.com/@tellyshineofficial456?si=Navejp9tReHUExfa"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 rounded-full bg-red-600 hover:bg-red-700 px-6 py-3 font-bold text-white shrink-0 transition-colors"
-          >
-            <Youtube className="w-5 h-5" /> Watch on YouTube
-          </a>
-        </div>
-      </section>
+        )}
 
-      {/* Newsletter Subscription */}
-      <section className="bg-white border-t border-gray-200 py-14">
-        <div className="max-w-2xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-2xl md:text-3xl font-black text-slate-950">
-            Subscribe to Our Entertainment Newsletter
-          </h2>
-          <p className="mt-2 text-sm sm:text-base text-slate-600">
-            Get breaking Bollywood, Hollywood, TV, and OTT stories delivered straight to your inbox.
-          </p>
-          <form onSubmit={handleSubscribe} className="mt-6 flex flex-col sm:flex-row gap-3">
-            <input
-              type="email"
-              required
-              placeholder="Enter your email address..."
-              value={newsletterEmail}
-              onChange={(e) => setNewsletterEmail(e.target.value)}
-              className="flex-1 h-11 rounded-lg border border-gray-300 px-4 text-sm focus:outline-none focus:border-red-600"
-            />
-            <Button
-              type="submit"
-              disabled={subscribing}
-              className="h-11 bg-red-600 hover:bg-red-700 text-white px-6 font-semibold"
-            >
-              {subscribing ? "Subscribing..." : "Subscribe"}
-            </Button>
-          </form>
-          {newsletterStatus && (
-            <p className="mt-3 text-sm font-medium text-slate-700">{newsletterStatus}</p>
-          )}
-        </div>
-      </section>
+        {/* 3. Cinematic Hero Section */}
+        <section className="relative bg-charcoal text-ivory overflow-hidden border-b border-soft-black">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(196,154,85,0.12),transparent_55%)]"
+          />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 md:py-16 relative">
+            {heroPost ? (
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 items-stretch">
+                {/* Main Cinematic Lead */}
+                <div className="lg:col-span-8 flex flex-col justify-between">
+                  <Link
+                    to={`/post/${heroPost.slug}`}
+                    className="group relative block h-72 sm:h-96 md:h-[460px] rounded-sm overflow-hidden border border-ivory/15 bg-soft-black"
+                  >
+                    <motion.img
+                      initial={{ scale: 1.06, opacity: 0.7 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ duration: 0.9, ease: EDITORIAL_EASE }}
+                      src={
+                        heroPost.image ||
+                        heroPost.featured_image ||
+                        getFallbackImage(heroPost.category_slug)
+                      }
+                      alt={heroPost.title}
+                      onError={(e) => handleImageError(e, heroPost.category_slug)}
+                      className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-charcoal via-charcoal/45 to-transparent" />
 
-      {/* Follow Us Section */}
-      <section className="bg-gray-100 border-t border-gray-200 py-14 mt-6">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 text-center">
-          <h2 className="text-3xl font-black text-slate-950">
-            Follow Telly Shine Entertainment
-          </h2>
-          <p className="mt-3 text-slate-600">
-            Join our community across our official social media channels for daily updates.
-          </p>
-          <div className="mt-7 flex flex-wrap justify-center gap-4">
-            {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+                    <div className="absolute bottom-0 left-0 right-0 p-6 sm:p-8 md:p-10">
+                      <motion.div
+                        initial={{ opacity: 0, y: 14 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.5, delay: 0.15, ease: EDITORIAL_EASE }}
+                      >
+                        <span className="inline-block bg-burgundy text-ivory px-3 py-1 text-[10px] font-bold uppercase tracking-[0.2em] rounded-sm">
+                          {heroPost.category || "Cover Story"}
+                        </span>
+                      </motion.div>
+
+                      <motion.h1
+                        initial={{ opacity: 0, y: 18 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.65, delay: 0.25, ease: EDITORIAL_EASE }}
+                        className="mt-3 font-serif text-2xl sm:text-4xl md:text-5xl font-bold leading-[1.12] text-ivory group-hover:text-gold transition-colors"
+                      >
+                        {heroPost.title}
+                      </motion.h1>
+
+                      {(heroPost.description || heroPost.excerpt) && (
+                        <motion.p
+                          initial={{ opacity: 0, y: 12 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ duration: 0.6, delay: 0.35, ease: EDITORIAL_EASE }}
+                          className="mt-3 text-ivory/80 text-sm sm:text-base max-w-2xl line-clamp-2 leading-relaxed"
+                        >
+                          {heroPost.description || heroPost.excerpt}
+                        </motion.p>
+                      )}
+                    </div>
+                  </Link>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: 0.45, ease: EDITORIAL_EASE }}
+                    className="mt-5 flex flex-wrap items-center justify-between gap-4"
+                  >
+                    <div className="flex items-center gap-3 text-xs text-ivory/60">
+                      <span className="text-gold font-semibold uppercase tracking-widest">
+                        Featured Dispatch
+                      </span>
+                      {heroPost.author?.name && (
+                        <>
+                          <span>&bull;</span>
+                          <span>By {heroPost.author.name}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Link to={`/post/${heroPost.slug}`}>
+                        <Button className="bg-burgundy hover:bg-burgundy-dark text-ivory text-xs uppercase tracking-wider font-semibold rounded-sm px-5 h-9">
+                          Read Full Story <ArrowRight className="ml-2 w-3.5 h-3.5" />
+                        </Button>
+                      </Link>
+                      <Link to="/news">
+                        <Button
+                          variant="outline"
+                          className="border-ivory/25 bg-transparent text-ivory hover:bg-ivory hover:text-charcoal text-xs uppercase tracking-wider font-semibold rounded-sm px-4 h-9"
+                        >
+                          All Stories
+                        </Button>
+                      </Link>
+                    </div>
+                  </motion.div>
+                </div>
+
+                {/* Right Editorial Rail */}
+                <aside className="lg:col-span-4 bg-soft-black/70 border border-ivory/10 rounded-sm p-6 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center justify-between pb-3 border-b border-ivory/15">
+                      <span className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+                        Editor&apos;s Picks
+                      </span>
+                      <span className="text-[10px] uppercase tracking-widest text-ivory/45">
+                        Spotlight
+                      </span>
+                    </div>
+
+                    {heroSidePosts.length > 0 ? (
+                      <div className="divide-y divide-ivory/10 mt-2">
+                        {heroSidePosts.map((item) => (
+                          <Link
+                            key={item._id}
+                            to={`/post/${item.slug}`}
+                            className="group flex gap-3.5 py-4 first:pt-3 last:pb-1"
+                          >
+                            <img
+                              src={
+                                item.image ||
+                                item.featured_image ||
+                                getFallbackImage(item.category_slug)
+                              }
+                              alt={item.title}
+                              onError={(e) => handleImageError(e, item.category_slug)}
+                              className="w-20 h-20 rounded-sm object-cover shrink-0 border border-ivory/10 group-hover:opacity-90 transition-opacity"
+                              loading="lazy"
+                            />
+                            <div className="min-w-0">
+                              <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-gold">
+                                {item.category || "Editorial"}
+                              </span>
+                              <h3 className="mt-1 font-serif text-sm sm:text-base font-bold text-ivory group-hover:text-gold transition-colors line-clamp-2 leading-snug">
+                                {item.title}
+                              </h3>
+                            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-xs text-ivory/55 py-6">
+                        Curated stories from Bollywood, Hollywood, Television &amp; Digital OTT.
+                      </p>
+                    )}
+                  </div>
+
+                  <div className="pt-4 mt-4 border-t border-ivory/15 flex items-center justify-between text-xs">
+                    <span className="text-ivory/60">Telly Shine Edition</span>
+                    <Link
+                      to="/news"
+                      className="text-gold hover:text-ivory font-semibold uppercase tracking-wider inline-flex items-center gap-1"
+                    >
+                      Archive <ArrowUpRight className="w-3.5 h-3.5" />
+                    </Link>
+                  </div>
+                </aside>
+              </div>
+            ) : (
+              <div className="max-w-3xl py-10">
+                <p className="text-gold font-semibold uppercase tracking-[0.24em] text-xs">
+                  Telly Shine Entertainment
+                </p>
+                <h1 className="mt-3 font-serif text-4xl md:text-6xl font-bold leading-tight text-ivory">
+                  Cinema, Television &amp; Culture, Curated.
+                </h1>
+                <p className="mt-4 text-ivory/75 text-lg leading-relaxed">
+                  Bollywood, Hollywood, TV &amp; Television, Digital OTT, and exclusive celebrity stories.
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* 4. Top Headlines Section (Asymmetric Magazine Layout) */}
+        {leadHeadline && (
+          <section className="py-14 md:py-16 bg-ivory-light border-b border-stone">
+            <div className="max-w-7xl mx-auto px-4 sm:px-6">
+              <RevealSection>
+                <SectionHeading
+                  kicker="Front Page"
+                  title="Top Headlines"
+                  linkTo="/news"
+                  linkLabel="All Headlines"
+                />
+              </RevealSection>
+
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+                <RevealSection className="lg:col-span-7">
+                  <PostCard post={leadHeadline} variant="featured" />
+                </RevealSection>
+
+                <RevealSection delay={0.12} className="lg:col-span-5">
+                  <div className="bg-ivory border border-stone rounded-sm p-6">
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.2em] text-burgundy pb-3 border-b border-stone">
+                      Most Read Dispatches
+                    </h3>
+                    <div className="divide-y divide-stone">
+                      {headlineList.map((item, idx) => (
+                        <Link
+                          key={item._id}
+                          to={`/post/${item.slug}`}
+                          className="group flex items-start gap-4 py-4 first:pt-4 last:pb-1"
+                        >
+                          <span className="font-serif text-2xl font-bold text-gold/80 group-hover:text-burgundy transition-colors leading-none w-7 shrink-0">
+                            0{idx + 1}
+                          </span>
+                          <div className="min-w-0">
+                            <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-ink-muted">
+                              {item.category || "News"}
+                            </span>
+                            <h4 className="mt-1 font-serif text-base font-bold text-charcoal group-hover:text-burgundy transition-colors line-clamp-2 leading-snug">
+                              {item.title}
+                            </h4>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </RevealSection>
+              </div>
+            </div>
+          </section>
+        )}
+
+        {/* 5. Latest News Grid */}
+        <section className="py-14 md:py-16 bg-ivory border-b border-stone">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6">
+            <RevealSection>
+              <SectionHeading
+                kicker="Fresh Off The Desk"
+                title="Latest News"
+                linkTo="/news"
+                linkLabel="View All Articles"
+              />
+            </RevealSection>
+
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                {[1, 2, 3].map((n) => (
+                  <div
+                    key={n}
+                    className="h-80 rounded-sm bg-stone/40 animate-pulse border border-stone"
+                  />
+                ))}
+              </div>
+            ) : latestPosts.length > 0 ? (
+              <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7">
+                {latestPosts.map((post) => (
+                  <StaggerItem key={post._id}>
+                    <PostCard post={post} />
+                  </StaggerItem>
+                ))}
+              </StaggerGrid>
+            ) : (
+              <EmptyCategoryState name="Latest News" />
+            )}
+          </div>
+        </section>
+
+        {/* 6. Bollywood Section */}
+        <CategoryBand
+          kicker="Hindi Cinema"
+          title="Bollywood"
+          slug="bollywood"
+          posts={bollywoodPosts}
+          cream
+          asymmetric
+        />
+
+        {/* 7. Hollywood Section (Dark Cinematic Band) */}
+        <CategoryBand
+          kicker="Global Cinema"
+          title="Hollywood"
+          slug="hollywood"
+          posts={hollywoodPosts}
+          dark
+        />
+
+        {/* 8. TV & Television Section */}
+        <CategoryBand
+          kicker="Small Screen & TRP"
+          title="TV & Television"
+          slug="television"
+          posts={tvPosts}
+        />
+
+        {/* 9. Digital Section */}
+        <CategoryBand
+          kicker="OTT & Streaming"
+          title="Digital"
+          slug="digital"
+          posts={digitalPosts}
+          cream
+        />
+
+        {/* 10. Movies Section */}
+        <CategoryBand
+          kicker="Reviews & Box Office"
+          title="Movies"
+          slug="movies"
+          posts={moviesPosts}
+        />
+
+        {/* 11. Celebrity Stories */}
+        <CategoryBand
+          kicker="Profiles & Exclusives"
+          title="Celebrity Stories"
+          slug="celebrity"
+          posts={celebrityStoriesPosts}
+          cream
+          asymmetric
+        />
+
+        {/* 12. Entertainment Videos Section */}
+        <section className="bg-charcoal text-ivory py-16 border-y border-soft-black relative overflow-hidden">
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_left,rgba(184,58,53,0.14),transparent_55%)]"
+          />
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 relative">
+            <RevealSection className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-8">
+              <div className="max-w-2xl">
+                <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+                  <Play className="w-3.5 h-3.5 fill-gold" /> Telly Shine Originals
+                </span>
+                <h2 className="font-serif text-3xl md:text-4xl font-bold mt-2 text-ivory leading-tight">
+                  Entertainment Videos &amp; Celebrity Interviews
+                </h2>
+                <p className="mt-3 text-ivory/70 text-sm sm:text-base leading-relaxed">
+                  Watch exclusive actor interviews, serial promos, red carpet highlights, and
+                  behind-the-scenes dispatches on our official YouTube channel.
+                </p>
+              </div>
               <a
-                key={label}
-                href={href}
+                href="https://youtube.com/@tellyshineofficial456?si=Navejp9tReHUExfa"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-full bg-white border border-gray-200 px-6 py-3 font-semibold text-slate-900 shadow-sm hover:border-red-600 hover:text-red-600 transition-colors"
+                className="inline-flex items-center gap-2.5 rounded-sm bg-burgundy hover:bg-burgundy-dark px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.18em] text-ivory shrink-0 transition-colors"
               >
-                <Icon size={19} /> {label}
+                <Youtube className="w-4 h-4" /> Watch on YouTube
               </a>
-            ))}
+            </RevealSection>
           </div>
-        </div>
-      </section>
-    </main>
+        </section>
+
+        {/* Newsletter & Official Socials */}
+        <section className="bg-ivory-light py-16 border-b border-stone">
+          <div className="max-w-4xl mx-auto px-4 sm:px-6 text-center">
+            <RevealSection>
+              <span className="inline-flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-burgundy">
+                <Mail className="w-3.5 h-3.5" /> The Morning Dispatch
+              </span>
+              <h2 className="font-serif text-3xl md:text-4xl font-bold text-charcoal mt-2">
+                Subscribe to Our Entertainment Newsletter
+              </h2>
+              <p className="mt-3 text-sm sm:text-base text-ink-muted max-w-xl mx-auto">
+                Curated Bollywood, Hollywood, Television, and OTT stories delivered directly to your inbox.
+              </p>
+
+              <form
+                onSubmit={handleSubscribe}
+                className="mt-7 flex flex-col sm:flex-row gap-3 max-w-lg mx-auto"
+              >
+                <input
+                  type="email"
+                  required
+                  placeholder="Enter your email address..."
+                  value={newsletterEmail}
+                  onChange={(e) => setNewsletterEmail(e.target.value)}
+                  className="flex-1 h-11 rounded-sm border border-stone bg-ivory px-4 text-sm text-charcoal placeholder:text-ink-muted/70 focus:outline-none focus:border-charcoal"
+                />
+                <Button
+                  type="submit"
+                  disabled={subscribing}
+                  className="h-11 bg-charcoal hover:bg-burgundy text-ivory px-6 text-xs uppercase tracking-wider font-semibold rounded-sm transition-colors"
+                >
+                  {subscribing ? "Subscribing..." : "Subscribe"}
+                </Button>
+              </form>
+              {newsletterStatus && (
+                <p className="mt-3 text-sm font-medium text-burgundy">
+                  {newsletterStatus}
+                </p>
+              )}
+
+              <div className="mt-10 pt-8 border-t border-stone flex flex-wrap justify-center gap-3">
+                {SOCIAL_LINKS.map(({ label, href, Icon }) => (
+                  <a
+                    key={label}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 rounded-sm bg-ivory border border-stone px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-charcoal hover:border-burgundy hover:text-burgundy transition-colors"
+                  >
+                    <Icon className="w-4 h-4" /> {label}
+                  </a>
+                ))}
+              </div>
+            </RevealSection>
+          </div>
+        </section>
+      </main>
+    </PageTransition>
   )
 }
 

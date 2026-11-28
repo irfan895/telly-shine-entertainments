@@ -1,5 +1,6 @@
 import PostCard from "@/components/shared/PostCard"
 import { Button } from "@/components/ui/button"
+import { normalizeArticles } from "@/lib/rssNormalize"
 import { Input } from "@/components/ui/input"
 import {
   Select,
@@ -10,9 +11,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+import {
+  PageTransition,
+  StaggerGrid,
+  StaggerItem,
+} from "@/components/editorial/MotionPrimitives"
 import React, { useEffect, useState } from "react"
 import { useLocation, useNavigate } from "react-router-dom"
+import { SlidersHorizontal } from "lucide-react"
 
 const Search = () => {
   const location = useLocation()
@@ -24,13 +30,9 @@ const Search = () => {
     category: "",
   })
 
-  //   console.log(sidebarData)
-
   const [posts, setPosts] = useState([])
   const [loading, setLoading] = useState(false)
   const [showMore, setShowMore] = useState(false)
-
-  console.log(posts)
 
   useEffect(() => {
     const urlParams = new URLSearchParams(location.search)
@@ -39,22 +41,18 @@ const Search = () => {
     const sortFromUrl = urlParams.get("sort")
     const categoryFromUrl = urlParams.get("category")
 
-    console.log(searchTermFromUrl)
-
     if (searchTermFromUrl || sortFromUrl || categoryFromUrl) {
-      setSidebarData({
-        ...sidebarData,
+      setSidebarData((prev) => ({
+        ...prev,
         searchTerm: searchTermFromUrl || "",
-        sort: sortFromUrl || "",
+        sort: sortFromUrl || "desc",
         category: categoryFromUrl || "",
-      })
+      }))
     }
 
     const fetchPosts = async () => {
       setLoading(true)
-
       const searchQuery = urlParams.toString()
-
       const res = await fetch(`/api/post/getposts?${searchQuery}`)
 
       if (!res.ok) {
@@ -62,17 +60,11 @@ const Search = () => {
         return
       }
 
-      if (res.ok) {
-        const data = await res.json()
-        setPosts(data.posts)
-        setLoading(false)
-
-        if (data.posts.length === 9) {
-          setShowMore(true)
-        } else {
-          setShowMore(false)
-        }
-      }
+      const data = await res.json()
+      const normalized = normalizeArticles(data.posts || [])
+      setPosts(normalized)
+      setLoading(false)
+      setShowMore(normalized.length === 9)
     }
 
     fetchPosts()
@@ -86,162 +78,169 @@ const Search = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-
     const urlParams = new URLSearchParams(location.search)
-
     urlParams.set("searchTerm", sidebarData.searchTerm)
     urlParams.set("sort", sidebarData.sort)
     urlParams.set("category", sidebarData.category)
-
-    const searchQuery = urlParams.toString()
-
-    navigate(`/search?${searchQuery}`)
+    navigate(`/search?${urlParams.toString()}`)
   }
 
   const handleShowMore = async () => {
-    const numberOfPosts = posts.length
-    const startIndex = numberOfPosts
     const urlParams = new URLSearchParams(location.search)
-
-    urlParams.set("startIndex", startIndex)
-
-    const searchQuery = urlParams.toString()
-
-    const res = await fetch(`/api/post/getposts?${searchQuery}`)
-
-    if (!res.ok) {
-      return
-    }
-
-    if (res.ok) {
-      const data = await res.json()
-
-      setPosts([...posts, ...data.posts])
-
-      if (data.posts.length === 9) {
-        setShowMore(true)
-      } else {
-        setShowMore(false)
-      }
-    }
+    urlParams.set("startIndex", posts.length)
+    const res = await fetch(`/api/post/getposts?${urlParams.toString()}`)
+    if (!res.ok) return
+    const data = await res.json()
+    const next = normalizeArticles(data.posts || [])
+    setPosts([...posts, ...next])
+    setShowMore(next.length === 9)
   }
 
   return (
-    <div className="flex flex-col md:flex-row">
-      {/* Sidebar */}
-      <aside className="p-6 md:w-1/4 bg-white shadow-md border-r border-gray-300">
-        <form className="flex flex-col gap-6" onSubmit={handleSubmit}>
-          <h2 className="text-2xl font-semibold text-gray-600">Filters</h2>
-
-          {/* search input */}
-          <div className="flex flex-col gap-2">
-            <label className="font-medium text-gray-600">Search Term:</label>
-            <Input
-              placeholder="Search..."
-              id="searchTerm"
-              type="text"
-              className="border-gray-300 rounded-md"
-              value={sidebarData.searchTerm}
-              onChange={handleChange}
-            />
+    <PageTransition>
+      <main className="min-h-screen bg-ivory">
+        <section className="bg-charcoal text-ivory border-b border-soft-black py-10 px-4 sm:px-6">
+          <div className="max-w-7xl mx-auto">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-gold">
+              Editorial Archive
+            </p>
+            <h1 className="font-serif text-3xl md:text-4xl font-bold mt-1">
+              Explore Stories &amp; Dispatches
+            </h1>
           </div>
+        </section>
 
-          {/* Sort By */}
-          <div className="flex flex-col gap-2">
-            <label className="font-medium text-gray-600">Sort By:</label>
-
-            <Select
-              onValueChange={(value) =>
-                setSidebarData({ ...sidebarData, sort: value })
-              }
-              value={sidebarData.sort}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-10 grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Sidebar Filters */}
+          <aside className="lg:col-span-3">
+            <form
+              className="bg-ivory-light border border-stone rounded-sm p-6 space-y-5 sticky top-20"
+              onSubmit={handleSubmit}
             >
-              <SelectTrigger className="w-full border border-slate-400">
-                <SelectValue placeholder="Select Order" />
-              </SelectTrigger>
+              <div className="flex items-center gap-2 pb-3 border-b border-stone">
+                <SlidersHorizontal className="w-4 h-4 text-burgundy" />
+                <h2 className="font-serif text-lg font-bold text-charcoal">
+                  Refine Search
+                </h2>
+              </div>
 
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Order by:</SelectLabel>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                  Keyword
+                </label>
+                <Input
+                  placeholder="Search headlines, stars..."
+                  id="searchTerm"
+                  type="text"
+                  className="bg-ivory border-stone rounded-sm text-charcoal focus-visible:ring-burgundy"
+                  value={sidebarData.searchTerm}
+                  onChange={handleChange}
+                />
+              </div>
 
-                  <SelectItem value="desc">Latest</SelectItem>
-                  <SelectItem value="asc">Oldest</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                  Sort By
+                </label>
+                <Select
+                  onValueChange={(value) =>
+                    setSidebarData({ ...sidebarData, sort: value })
+                  }
+                  value={sidebarData.sort}
+                >
+                  <SelectTrigger className="w-full bg-ivory border-stone rounded-sm text-charcoal">
+                    <SelectValue placeholder="Select Order" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-ivory-light border-stone">
+                    <SelectGroup>
+                      <SelectLabel>Order by</SelectLabel>
+                      <SelectItem value="desc">Latest First</SelectItem>
+                      <SelectItem value="asc">Oldest First</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-1.5">
+                <label className="text-xs font-semibold uppercase tracking-wider text-ink-muted">
+                  Section
+                </label>
+                <Select
+                  onValueChange={(value) =>
+                    setSidebarData({ ...sidebarData, category: value })
+                  }
+                  value={sidebarData.category}
+                >
+                  <SelectTrigger className="w-full bg-ivory border-stone rounded-sm text-charcoal">
+                    <SelectValue placeholder="All Categories" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-ivory-light border-stone">
+                    <SelectGroup>
+                      <SelectLabel>Category</SelectLabel>
+                      <SelectItem value="bollywood">Bollywood</SelectItem>
+                      <SelectItem value="hollywood">Hollywood</SelectItem>
+                      <SelectItem value="television">TV &amp; Television</SelectItem>
+                      <SelectItem value="digital">Digital</SelectItem>
+                      <SelectItem value="movies">Movies</SelectItem>
+                      <SelectItem value="celebrity">Celebrity News</SelectItem>
+                      <SelectItem value="stories">Stories</SelectItem>
+                      <SelectItem value="blog">Blog</SelectItem>
+                    </SelectGroup>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full bg-burgundy hover:bg-burgundy-dark text-ivory rounded-sm text-xs uppercase tracking-wider font-semibold h-10"
+              >
+                Apply Filters
+              </Button>
+            </form>
+          </aside>
+
+          {/* Results */}
+          <div className="lg:col-span-9">
+            {loading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-80 rounded-sm bg-stone/40 animate-pulse border border-stone"
+                  />
+                ))}
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="rounded-sm border border-dashed border-stone bg-ivory-light p-12 text-center text-ink-muted text-sm">
+                No articles matched your search criteria.
+              </div>
+            ) : (
+              <>
+                <StaggerGrid className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
+                  {posts.map((post) => (
+                    <StaggerItem key={post._id}>
+                      <PostCard post={post} />
+                    </StaggerItem>
+                  ))}
+                </StaggerGrid>
+
+                {showMore && (
+                  <div className="mt-10 text-center">
+                    <Button
+                      variant="outline"
+                      onClick={handleShowMore}
+                      className="border-charcoal text-charcoal hover:bg-charcoal hover:text-ivory rounded-sm text-xs uppercase tracking-wider font-semibold px-7 h-10"
+                    >
+                      Load More
+                    </Button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
-
-          {/* Category */}
-          <div className="flex flex-col gap-2">
-            <label className="font-medium text-gray-600">Category:</label>
-
-            <Select
-              onValueChange={(value) =>
-                setSidebarData({ ...sidebarData, category: value })
-              }
-              value={sidebarData.category}
-            >
-              <SelectTrigger className="w-full border border-slate-400">
-                <SelectValue placeholder="Select a Category" />
-              </SelectTrigger>
-
-              <SelectContent>
-                <SelectGroup>
-                  <SelectLabel>Category:</SelectLabel>
-
-                  <SelectItem value="bollywood">Bollywood</SelectItem>
-                  <SelectItem value="hollywood">Hollywood</SelectItem>
-                  <SelectItem value="television">TV &amp; Television</SelectItem>
-                  <SelectItem value="digital">Digital</SelectItem>
-                  <SelectItem value="movies">Movies</SelectItem>
-                  <SelectItem value="stories">Stories</SelectItem>
-                  <SelectItem value="blog">Blog</SelectItem>
-                </SelectGroup>
-              </SelectContent>
-            </Select>
-          </div>
-
-          {/* submit button */}
-          <Button
-            type="submit"
-            className="bg-red-600 text-white py-2 px-4 rounded-md shadow-lg "
-          >
-            Apply Filters
-          </Button>
-        </form>
-      </aside>
-
-      <div className="w-full">
-        <h1 className="text-2xl font-semibold text-slate-700 p-3 mt-5">
-          News Articles:
-        </h1>
-
-        <Separator className="bg-slate-300" />
-
-        <div className="p-7 flex flex-wrap gap-4">
-          {!loading && posts.length === 0 && (
-            <p className="text-xl text-gray-500">No posts found.</p>
-          )}
-
-          {loading && (
-            <p className="text-xl text-gray-500 animate-pulse">Loading...</p>
-          )}
-
-          {!loading &&
-            posts &&
-            posts.map((post) => <PostCard key={post._id} post={post} />)}
-
-          {showMore && (
-            <button
-              onClick={handleShowMore}
-              className="text-slate-800 text-lg hover:underline p-7 w-full"
-            >
-              Show More
-            </button>
-          )}
         </div>
-      </div>
-    </div>
+      </main>
+    </PageTransition>
   )
 }
 

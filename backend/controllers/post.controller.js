@@ -318,10 +318,6 @@ export const syncNews = async (req, res, next) => {
   }
   try {
     const result = await syncEntertainmentNews({ force: true })
-    if (req.query.slug && posts.length === 1) {
-      Post.updateOne({ _id: posts[0]._id }, { $inc: { views_count: 1 } }).catch(() => {})
-    }
-
     res.status(200).json({ success: true, ...result })
   } catch (error) {
     next(error)

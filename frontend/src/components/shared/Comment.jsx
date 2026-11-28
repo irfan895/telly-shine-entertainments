@@ -19,8 +19,6 @@ import {
 
 const Comment = ({ comment, onLike, onEdit, onDelete }) => {
   const [user, setUser] = useState({})
-  //   console.log(user)
-
   const [isEditing, setIsEditing] = useState(false)
   const [editedContent, setEditedContent] = useState(comment.content)
 
@@ -30,9 +28,7 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
     const getUser = async () => {
       try {
         const res = await fetch(`/api/user/${comment.userId}`)
-
         const data = await res.json()
-
         if (res.ok) {
           setUser(data)
         }
@@ -71,22 +67,22 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
   }
 
   return (
-    <div className="flex p-4 border-b border-slate-300 text-sm gap-2">
-      <div className="flex-shrink-0 mr-0">
+    <div className="flex py-4 text-sm gap-3">
+      <div className="flex-shrink-0">
         <img
           src={user.profilePicture}
           alt={user.username}
-          className="w-10 h-10 rounded-full bg-gray-200"
+          className="w-9 h-9 rounded-sm object-cover bg-stone/40 border border-stone"
         />
       </div>
 
-      <div className="flex-1">
-        <div className="flex items-center mb-1">
-          <span className="font-semibold mr-1 text-sm truncate">
-            {user ? `@${user.username}` : "Unknown"}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="font-semibold text-xs text-charcoal truncate">
+            {user?.username ? `@${user.username}` : "Reader"}
           </span>
 
-          <span className="text-gray-500 text-sm">
+          <span className="text-ink-muted text-xs">
             {moment(comment.createdAt).fromNow()}
           </span>
         </div>
@@ -94,7 +90,7 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
         {isEditing ? (
           <>
             <Textarea
-              className="mb-2"
+              className="mb-2 bg-ivory border-stone rounded-sm"
               value={editedContent}
               onChange={(e) => setEditedContent(e.target.value)}
             />
@@ -102,7 +98,7 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
             <div className="flex justify-end gap-2 text-sm">
               <Button
                 type="button"
-                className="bg-green-600"
+                className="bg-burgundy hover:bg-burgundy-dark text-ivory rounded-sm h-8 text-xs"
                 onClick={handleSave}
               >
                 Save
@@ -110,7 +106,7 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
 
               <Button
                 type="button"
-                className="hover:border-red-500 hover:text-red-500"
+                className="border-stone text-charcoal hover:border-burgundy hover:text-burgundy rounded-sm h-8 text-xs"
                 variant="outline"
                 onClick={() => setIsEditing(false)}
               >
@@ -120,27 +116,26 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
           </>
         ) : (
           <>
-            <p className="text-slate-600 pb-2">{comment.content}</p>
+            <p className="text-soft-black pb-2 leading-relaxed">{comment.content}</p>
 
-            <div className="flex items-center pt-2 text-sm border-t border-slate-300 max-w-fit gap-2">
+            <div className="flex items-center pt-1 text-xs gap-3 text-ink-muted">
               <button
                 type="button"
                 onClick={() => onLike(comment._id)}
-                className={`text-gray-400 hover:text-blue-500 ${
+                className={`inline-flex items-center gap-1 transition-colors hover:text-burgundy ${
                   currentUser &&
                   comment.likes.includes(currentUser._id) &&
-                  "!text-blue-600"
+                  "text-burgundy font-semibold"
                 }`}
               >
-                <AiFillLike className="text-lg" />
+                <AiFillLike className="text-sm" />
+                {comment.numberOfLikes > 0 && (
+                  <span>
+                    {comment.numberOfLikes}{" "}
+                    {comment.numberOfLikes === 1 ? "like" : "likes"}
+                  </span>
+                )}
               </button>
-
-              <p className="text-gray-400">
-                {comment.numberOfLikes > 0 &&
-                  comment.numberOfLikes +
-                    " " +
-                    (comment.numberOfLikes === 1 ? "like" : "likes")}
-              </p>
 
               {currentUser &&
                 (currentUser._id === comment.userId || currentUser.isAdmin) && (
@@ -148,38 +143,39 @@ const Comment = ({ comment, onLike, onEdit, onDelete }) => {
                     <button
                       type="button"
                       onClick={handleEdit}
-                      className="text-gray-400 hover:text-green-600"
+                      className="hover:text-charcoal transition-colors"
                     >
                       Edit
                     </button>
 
                     <AlertDialog>
                       <AlertDialogTrigger asChild>
-                        <span className="text-gray-400 hover:text-red-600 cursor-pointer">
+                        <span className="hover:text-burgundy cursor-pointer transition-colors">
                           Delete
                         </span>
                       </AlertDialogTrigger>
 
-                      <AlertDialogContent>
+                      <AlertDialogContent className="bg-ivory-light border-stone">
                         <AlertDialogHeader>
-                          <AlertDialogTitle>
-                            Are you absolutely sure?
+                          <AlertDialogTitle className="font-serif">
+                            Delete this comment?
                           </AlertDialogTitle>
 
-                          <AlertDialogDescription>
+                          <AlertDialogDescription className="text-ink-muted">
                             This action cannot be undone. This will permanently
-                            delete your comment and remove your data from our
-                            servers.
+                            delete your comment from our servers.
                           </AlertDialogDescription>
                         </AlertDialogHeader>
 
                         <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogCancel className="border-stone">
+                            Cancel
+                          </AlertDialogCancel>
                           <AlertDialogAction
-                            className="bg-red-600"
+                            className="bg-burgundy hover:bg-burgundy-dark text-ivory"
                             onClick={() => onDelete(comment._id)}
                           >
-                            Continue
+                            Delete
                           </AlertDialogAction>
                         </AlertDialogFooter>
                       </AlertDialogContent>

@@ -23,6 +23,7 @@ import {
 import { Input } from "../ui/input"
 import { Button } from "../ui/button"
 import { useToast } from "@/hooks/use-toast"
+import { normalizeArticle, normalizeArticles } from "@/lib/rssNormalize"
 
 const CATEGORIES = ["all", "bollywood", "hollywood", "television", "digital", "movies", "stories", "blog", "podcasts"]
 
@@ -76,7 +77,7 @@ const DashboardPosts = () => {
       const data = await res.json()
 
       if (res.ok) {
-        const list = data.posts || []
+        const list = normalizeArticles(data.posts || [])
         setPosts((prev) => (append ? [...prev, ...list] : list))
         setShowMore(list.length === 12)
       }
@@ -110,7 +111,8 @@ const DashboardPosts = () => {
       )
       const data = await res.json()
       if (res.ok) {
-        setPosts((prev) => prev.map((p) => (p._id === post._id ? data : p)))
+        const updated = normalizeArticle(data)
+        setPosts((prev) => prev.map((p) => (p._id === post._id && updated ? updated : p)))
         toast({
           title: nextStatus === "published" ? "Article Published" : "Moved to Drafts",
         })

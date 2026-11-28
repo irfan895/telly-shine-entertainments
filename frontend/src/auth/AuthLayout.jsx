@@ -1,52 +1,59 @@
-
-import React from "react";
-import { Link } from "react-router-dom";
+import React from "react"
+import { Link } from "react-router-dom"
+import { PageTransition } from "@/components/editorial/MotionPrimitives"
 
 const AuthLayout = ({ children, title, description }) => {
   return (
-    <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+    <PageTransition>
+      <div className="min-h-screen bg-ivory flex items-center justify-center p-4 py-12">
+        <div className="w-full max-w-5xl grid md:grid-cols-2 bg-ivory-light border border-stone rounded-sm shadow-[0_20px_50px_-20px_rgba(23,23,23,0.2)] overflow-hidden">
+          {/* Left Editorial Section */}
+          <div className="bg-charcoal text-ivory p-10 md:p-12 flex flex-col justify-between relative overflow-hidden">
+            <div
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(196,154,85,0.14),transparent_60%)]"
+            />
+            <div className="relative">
+              <Link to="/" className="inline-block">
+                <span className="font-serif text-3xl font-black tracking-tight text-ivory">
+                  Telly <span className="text-burgundy italic font-bold">Shine</span>
+                </span>
+                <span className="block text-[10px] font-semibold uppercase tracking-[0.26em] text-gold mt-1">
+                  Entertainment
+                </span>
+              </Link>
 
-      <div className="w-full max-w-5xl grid md:grid-cols-2 bg-white rounded-2xl shadow-xl overflow-hidden">
+              <h1 className="font-serif text-3xl md:text-4xl font-bold mt-10 leading-tight text-ivory">
+                Your World of Entertainment, Curated.
+              </h1>
 
-        {/* Left Section */}
-        <div className="bg-slate-900 text-white p-10 flex flex-col justify-center">
+              <p className="text-ivory/70 mt-4 text-sm leading-relaxed">
+                Discover the latest entertainment news, celebrity profiles,
+                television updates, and exclusive cinema stories.
+              </p>
+            </div>
 
-          <Link to="/" className="text-3xl font-bold">
-            <span className="text-rose-500">Telly Shine</span>
-            <span className="text-white"> Entertainment</span>
-          </Link>
+            <p className="relative text-xs text-ivory/45 mt-12">
+              &copy; {new Date().getFullYear()} Telly Shine Entertainment
+            </p>
+          </div>
 
-          <h1 className="text-4xl font-bold mt-10 leading-tight">
-            Your World of Entertainment
-          </h1>
+          {/* Right Form Section */}
+          <div className="p-8 md:p-12 flex flex-col justify-center bg-ivory-light">
+            <h2 className="font-serif text-3xl font-bold text-charcoal">
+              {title || "Welcome Back"}
+            </h2>
 
-          <p className="text-slate-300 mt-4">
-            Discover the latest entertainment news, celebrity updates,
-            trending stories and exclusive articles.
-          </p>
+            <p className="text-ink-muted text-sm mt-2 mb-8">
+              {description || "Access your Telly Shine account."}
+            </p>
 
-          <p className="text-sm text-slate-400 mt-12">
-            © {new Date().getFullYear()} Telly Shine Entertainment
-          </p>
-        </div>
-
-        {/* Right Section */}
-        <div className="p-8 md:p-12 flex flex-col justify-center">
-
-          <h2 className="text-3xl font-bold text-slate-900">
-            {title || "Welcome Back"}
-          </h2>
-
-          <p className="text-slate-500 mt-2 mb-8">
-            {description || "Access your Telly Shine account."}
-          </p>
-
-          {children}
-
+            {children}
+          </div>
         </div>
       </div>
-    </div>
-  );
-};
+    </PageTransition>
+  )
+}
 
-export default AuthLayout;
+export default AuthLayout

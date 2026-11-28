@@ -1,7 +1,7 @@
 import crypto from "crypto"
 import { XMLParser } from "fast-xml-parser"
 import Post from "../models/post.model.js"
-import { normalizeCategory } from "./normalize.js"
+import { extractText, normalizeCategory } from "./normalize.js"
 
 const CATEGORY_FALLBACK_IMAGES = {
   bollywood: "https://images.unsplash.com/photo-1517604931442-7e0c8ed2963c?w=1200&auto=format&fit=crop&q=80",
@@ -66,8 +66,8 @@ const parser = new XMLParser({
   attributeNamePrefix: "@_",
 })
 
-const stripHtml = (html = "") =>
-  String(html)
+const stripHtml = (raw = "") =>
+  extractText(raw, "")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
@@ -77,14 +77,15 @@ const stripHtml = (html = "") =>
     .trim()
 
 const extractImage = (item, catSlug) => {
-  if (item?.enclosure?.["@_url"]) return item.enclosure["@_url"]
+  if (item?.enclosure?.["@_url"]) return extractText(item.enclosure["@_url"])
   const media = item?.["media:content"]
-  if (Array.isArray(media) && media[0]?.["@_url"]) return media[0]["@_url"]
-  if (media?.["@_url"]) return media["@_url"]
+  if (Array.isArray(media) && media[0]?.["@_url"]) return extractText(media[0]["@_url"])
+  if (media?.["@_url"]) return extractText(media["@_url"])
   const thumb = item?.["media:thumbnail"]
-  if (thumb?.["@_url"]) return thumb["@_url"]
+  if (Array.isArray(thumb) && thumb[0]?.["@_url"]) return extractText(thumb[0]["@_url"])
+  if (thumb?.["@_url"]) return extractText(thumb["@_url"])
 
-  const rawDesc = String(item?.["content:encoded"] || item?.description || "")
+  const rawDesc = extractText(item?.["content:encoded"] || item?.description, "")
   const imgMatch = rawDesc.match(/<img[^>]+src=["']([^"']+)["']/i)
   if (imgMatch?.[1]) return imgMatch[1]
 
@@ -92,15 +93,13 @@ const extractImage = (item, catSlug) => {
 }
 
 const makeSlug = (title) =>
-  (
-    String(title)
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .trim()
-      .replace(/\s+/g, "-")
-      .replace(/-+/g, "-")
-      .slice(0, 90) || `story-${Date.now()}`
-  )
+  extractText(title, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 90) || `story-${Date.now()}`
 
 let lastSyncAt = 0
 let syncInFlight = null
@@ -127,71 +126,81 @@ export const syncEntertainmentNews = async ({ force = false } = {}) => {
 
         const xml = await res.text()
         const parsed = parser.parse(xml)
-        const rawItems = parsed?.rss?.channel?.item || []
-        const items = (Array.isArray(rawItems) ? rawItems : [rawItems]).slice(
-          0,
-          source.limit
-        )
+        const rawItems = parsed?.rss?.channel?.item || parsed?.feed?.entry || []
+        const items = (Array.isArray(rawItems) ? rawItems : [rawItems])
+          .filter((entry) => entry && typeof entry === "object")
+          .slice(0, source.limit)
 
         const cat = normalizeCategory(source.category)
 
         for (let idx = 0; idx < items.length; idx++) {
-          const item = items[idx]
-          const title = stripHtml(item?.title || "")
-          if (!title) continue
+          try {
+            const item = items[idx]
+            const title = stripHtml(item?.title)
+            if (!title) continue
 
-          const slug = makeSlug(title)
-          const sourceUrl = String(item?.link || "").trim()
+            const slug = makeSlug(title)
+            const sourceUrl = extractText(item?.link, "")
 
-          const exists = await Post.findOne({
-            $or: [{ slug }, ...(sourceUrl ? [{ source_url: sourceUrl }] : [])],
-          }).select("_id")
+            const exists = await Post.findOne({
+              $or: [{ slug }, ...(sourceUrl ? [{ source_url: sourceUrl }] : [])],
+            }).select("_id")
 
-          if (exists) continue
+            if (exists) continue
 
-          const rawSummary = stripHtml(item?.description || "")
-          const summary =
-            rawSummary.length > 260
-              ? `${rawSummary.slice(0, 257)}...`
-              : rawSummary || title
+            const rawSummary = stripHtml(item?.description || item?.summary || "")
+            const summary =
+              rawSummary.length > 260
+                ? `${rawSummary.slice(0, 257)}...`
+                : rawSummary || title
 
-          const fullHtml =
-            item?.["content:encoded"] ||
-            `<p>${summary}</p>${
-              sourceUrl
-                ? `<p><a href="${sourceUrl}" target="_blank" rel="noopener noreferrer">Read original coverage</a></p>`
-                : ""
-            }`
+            const rawHtml = extractText(item?.["content:encoded"] || item?.content, "")
+            const fullHtml =
+              rawHtml ||
+              `<p>${summary}</p>${
+                sourceUrl
+                  ? `<p><a href="${sourceUrl}" target="_blank" rel="noopener noreferrer">Read original coverage</a></p>`
+                  : ""
+              }`
 
-          const imageUrl = extractImage(item, cat.slug)
-          const pubDate = item?.pubDate ? new Date(item.pubDate) : new Date()
-          const isoDate = Number.isNaN(pubDate.getTime())
-            ? new Date().toISOString()
-            : pubDate.toISOString()
+            const imageUrl = extractImage(item, cat.slug)
+            const rawDate = extractText(item?.pubDate || item?.published || item?.updated, "")
+            const pubDate = rawDate ? new Date(rawDate) : new Date()
+            const isoDate = Number.isNaN(pubDate.getTime())
+              ? new Date().toISOString()
+              : pubDate.toISOString()
 
-          await Post.create({
-            article_id: crypto.randomUUID().replace(/-/g, ""),
-            userId: "telly-shine-news-sync",
-            title,
-            slug,
-            description: summary,
-            excerpt: summary,
-            content: String(fullHtml),
-            category: cat.name,
-            category_slug: cat.slug,
-            category_name: cat.name,
-            image: imageUrl,
-            featured_image: imageUrl,
-            status: "published",
-            is_featured: Boolean(source.markFeatured && idx === 0),
-            is_trending: Boolean(source.markTrending && idx < 2),
-            is_breaking: Boolean(source.markBreaking && idx < 2),
-            published_at: isoDate,
-            source_url: sourceUrl,
-            author: { name: item?.["dc:creator"] || "Telly Shine News Desk" },
-            tags: [cat.name, "Entertainment", "News"],
-          })
-          inserted++
+            const authorName = extractText(
+              item?.["dc:creator"] ?? item?.author?.name ?? item?.author,
+              "Telly Shine News Desk"
+            )
+
+            await Post.create({
+              article_id: crypto.randomUUID().replace(/-/g, ""),
+              userId: "telly-shine-news-sync",
+              title,
+              slug,
+              description: summary,
+              excerpt: summary,
+              content: fullHtml,
+              category: cat.name,
+              category_slug: cat.slug,
+              category_name: cat.name,
+              image: imageUrl,
+              featured_image: imageUrl,
+              status: "published",
+              is_featured: Boolean(source.markFeatured && idx === 0),
+              is_trending: Boolean(source.markTrending && idx < 2),
+              is_breaking: Boolean(source.markBreaking && idx < 2),
+              published_at: isoDate,
+              source_url: sourceUrl,
+              author: { name: authorName },
+              tags: [cat.name, "Entertainment", "News"],
+            })
+            inserted++
+          } catch (itemErr) {
+            console.warn(`Skipped malformed RSS item from ${source.url}:`, itemErr.message)
+          }
         }
       } catch (err) {
         console.warn(`RSS sync skipped for ${source.url}:`, err.message)

@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { Link } from "react-router-dom"
 import { Button } from "../ui/button"
+import { normalizeArticles } from "@/lib/rssNormalize"
 import {
   Table,
   TableBody,
@@ -66,7 +67,7 @@ const MainDashboard = () => {
         if (statsRes.ok) setStats(statsData)
         if (activityRes.ok) setActivityLogs(activityData.logs || [])
         if (usersRes.ok) setUsers(usersData.users || [])
-        if (postsRes.ok) setPosts(postsData.posts || [])
+        if (postsRes.ok) setPosts(normalizeArticles(postsData.posts || []))
         if (commentsRes.ok) setComments(commentsData.comments || [])
       } catch (error) {
         console.error("Failed to load dashboard stats:", error)
