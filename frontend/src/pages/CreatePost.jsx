@@ -14,7 +14,6 @@ import {
 import { useToast } from "@/hooks/use-toast"
 import {
   getFilePreview,
-  isAppwriteConfigured,
   uploadFile,
   validateImageFile,
 } from "@/lib/appwrite/uploadImage"
@@ -107,7 +106,7 @@ const CreatePost = () => {
       const postImageUrl = getFilePreview(uploadedFile.$id)
 
       setFormData((prev) => ({ ...prev, image: postImageUrl }))
-      toast({ title: "Featured image uploaded to Appwrite!" })
+      toast({ title: "Featured image uploaded!" })
     } catch (error) {
       setImageUploadError(error.message || "Image upload failed.")
       setUploadProgress(0)
@@ -182,8 +181,6 @@ const CreatePost = () => {
       setSubmitting(false)
     }
   }
-
-  const appwriteReady = isAppwriteConfigured()
 
   return (
     <AdminLayout title="Create New Article">
@@ -282,14 +279,6 @@ const CreatePost = () => {
               )}
             </div>
 
-            {!appwriteReady && (
-              <p className="mb-2 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                Appwrite Storage is not configured in <code>frontend/.env</code> (missing{" "}
-                <code>VITE_APPWRITE_URL</code>, <code>VITE_APPWRITE_PROJECT_ID</code>, or{" "}
-                <code>VITE_APPWRITE_STORAGE_ID</code>). Image uploads will fail until configured.
-              </p>
-            )}
-
             <div className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-center justify-between border-2 border-dashed border-gray-300 rounded-xl p-4 bg-gray-50">
               <div className="flex items-center gap-2 min-w-0">
                 <ImagePlus className="w-5 h-5 text-slate-500 shrink-0" />
@@ -346,7 +335,7 @@ const CreatePost = () => {
                 />
                 {!formData.image && localPreview && (
                   <span className="absolute bottom-2 left-2 bg-black/70 text-white text-xs px-2.5 py-1 rounded">
-                    Local preview — click &quot;Upload Image&quot; to upload to Appwrite
+                    Local preview — click &quot;Upload Image&quot; to upload
                   </span>
                 )}
               </div>

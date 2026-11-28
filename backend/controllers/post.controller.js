@@ -2,6 +2,7 @@ import crypto from "crypto"
 import jwt from "jsonwebtoken"
 import sanitizeHtml from "sanitize-html"
 import Post from "../models/post.model.js"
+import Media from "../models/media.model.js"
 import User from "../models/user.model.js"
 import { errorHandler } from "../utils/error.js"
 import { extractToken } from "../utils/verifyUser.js"
@@ -94,8 +95,8 @@ export const create = async (req, res, next) => {
       tags: Array.isArray(tags)
         ? tags.map((t) => String(t).trim()).filter(Boolean)
         : typeof tags === "string"
-        ? tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : [],
+          ? tags.split(",").map((t) => t.trim()).filter(Boolean)
+          : [],
       published_at: articleStatus === "published" ? nowIso : null,
       author: authorUser
         ? { name: authorUser.full_name || authorUser.username, user_id: authorUser._id, avatar: authorUser.profilePicture }
@@ -122,7 +123,7 @@ export const getPosts = async (req, res, next) => {
     if (existingCount === 0) {
       await syncEntertainmentNews({ force: true })
     } else {
-      syncEntertainmentNews().catch(() => {})
+      syncEntertainmentNews().catch(() => { })
     }
 
     const startIndex = parseInt(req.query.startIndex, 10) || 0
@@ -201,7 +202,7 @@ export const getPosts = async (req, res, next) => {
     })
 
     if (req.query.slug && posts.length === 1) {
-      Post.updateOne({ _id: posts[0]._id }, { $inc: { views_count: 1 } }).catch(() => {})
+      Post.updateOne({ _id: posts[0]._id }, { $inc: { views_count: 1 } }).catch(() => { })
     }
 
     res.status(200).json({
@@ -287,8 +288,8 @@ export const updatepost = async (req, res, next) => {
       updates.tags = Array.isArray(req.body.tags)
         ? req.body.tags.map((t) => String(t).trim()).filter(Boolean)
         : typeof req.body.tags === "string"
-        ? req.body.tags.split(",").map((t) => t.trim()).filter(Boolean)
-        : []
+          ? req.body.tags.split(",").map((t) => t.trim()).filter(Boolean)
+          : []
     }
     updates.updated_at = new Date().toISOString()
 
@@ -319,6 +320,62 @@ export const syncNews = async (req, res, next) => {
   try {
     const result = await syncEntertainmentNews({ force: true })
     res.status(200).json({ success: true, ...result })
+  } catch (error) {
+    next(error)
+  }
+}
+
+const ALLOWED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"]
+
+export const uploadImage = async (req, res, next) => {
+  if (!req.user?.isAdmin) {
+    return next(errorHandler(403, "Administrator privileges required"))
+  }
+
+  try {
+    const { filename, contentType, dataBase64 } = req.body || {}
+    if (!contentType || !ALLOWED_IMAGE_TYPES.includes(contentType)) {
+      return next(errorHandler(400, "Only JPG, JPEG, PNG, and WebP images are supported."))
+    }
+    if (!dataBase64 || typeof dataBase64 !== "string") {
+      return next(errorHandler(400, "Image data is required."))
+    }
+
+    const base64Payload = dataBase64.includes(",")
+      ? dataBase64.split(",")[1]
+      : dataBase64
+    const buffer = Buffer.from(base64Payload, "base64")
+
+    if (!buffer.length || buffer.length > 5 * 1024 * 1024) {
+      return next(errorHandler(400, "Image size must be between 1 byte and 5 MB."))
+    }
+
+    const saved = await Media.create({
+      filename: String(filename || "image").slice(0, 120),
+      contentType,
+      data: buffer,
+      uploadedBy: req.user.id || "",
+    })
+
+    res.status(201).json({
+      success: true,
+      fileId: saved._id.toString(),
+      url: `/api/post/media/${saved._id.toString()}`,
+    })
+  } catch (error) {
+    next(error)
+  }
+}
+
+export const getMedia = async (req, res, next) => {
+  try {
+    const media = await Media.findById(req.params.id)
+    if (!media) {
+      return next(errorHandler(404, "Image not found"))
+    }
+    res.setHeader("Content-Type", media.contentType)
+    res.setHeader("Cache-Control", "public, max-age=31536000, immutable")
+    res.send(media.data)
   } catch (error) {
     next(error)
   }

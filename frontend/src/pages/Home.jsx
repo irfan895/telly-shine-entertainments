@@ -43,24 +43,21 @@ const SOCIAL_LINKS = [
 
 const SectionHeading = ({ kicker, title, linkTo, linkLabel, dark = false }) => (
   <div
-    className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 mb-8 border-b ${
-      dark ? "border-ivory/15" : "border-stone"
-    }`}
+    className={`flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 mb-8 border-b ${dark ? "border-ivory/15" : "border-stone"
+      }`}
   >
     <div>
       {kicker && (
         <p
-          className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${
-            dark ? "text-gold" : "text-burgundy"
-          }`}
+          className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${dark ? "text-gold" : "text-burgundy"
+            }`}
         >
           {kicker}
         </p>
       )}
       <h2
-        className={`font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-1 ${
-          dark ? "text-ivory" : "text-charcoal"
-        }`}
+        className={`font-serif text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-1 ${dark ? "text-ivory" : "text-charcoal"
+          }`}
       >
         {title}
       </h2>
@@ -68,11 +65,10 @@ const SectionHeading = ({ kicker, title, linkTo, linkLabel, dark = false }) => (
     {linkTo && (
       <Link
         to={linkTo}
-        className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] transition-colors shrink-0 ${
-          dark
+        className={`inline-flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.16em] transition-colors shrink-0 ${dark
             ? "text-gold hover:text-ivory"
             : "text-burgundy hover:text-charcoal"
-        }`}
+          }`}
       >
         {linkLabel} <ArrowUpRight className="w-4 h-4" />
       </Link>
@@ -82,11 +78,10 @@ const SectionHeading = ({ kicker, title, linkTo, linkLabel, dark = false }) => (
 
 const EmptyCategoryState = ({ name, dark = false }) => (
   <div
-    className={`rounded-sm border border-dashed p-10 text-center text-sm ${
-      dark
+    className={`rounded-sm border border-dashed p-10 text-center text-sm ${dark
         ? "border-ivory/20 text-ivory/55 bg-soft-black/40"
         : "border-stone text-ink-muted bg-ivory-light/60"
-    }`}
+      }`}
   >
     No published articles in {name} yet. Stories from the Telly Shine editorial desk will appear here.
   </div>
@@ -104,8 +99,8 @@ const CategoryBand = ({
   const bgClass = dark
     ? "bg-charcoal text-ivory"
     : cream
-    ? "bg-ivory-light border-y border-stone"
-    : "bg-ivory"
+      ? "bg-ivory-light border-y border-stone"
+      : "bg-ivory"
 
   return (
     <section className={`${bgClass} py-14 md:py-16`}>
